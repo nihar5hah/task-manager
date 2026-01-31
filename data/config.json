@@ -1,0 +1,20 @@
+{
+  "categories": [
+    "automation",
+    "project",
+    "communication",
+    "maintenance"
+  ],
+  "priorities": [
+    "low",
+    "medium",
+    "high",
+    "urgent"
+  ],
+  "statuses": [
+    "backlog",
+    "todo",
+    "in-progress",
+    "done"
+  ]
+}

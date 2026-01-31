@@ -1,0 +1,46 @@
+{
+  "tasks": [
+    {
+      "id": "sample-1",
+      "title": "Setup Task Manager System",
+      "description": "Build complete Kanban board with all features",
+      "status": "in-progress",
+      "priority": "urgent",
+      "category": "project",
+      "createdAt": "2026-01-31T00:00:00.000Z",
+      "updatedAt": "2026-01-31T00:00:00.000Z",
+      "completedAt": null,
+      "source": "manual",
+      "metadata": {
+        "deadline": "2026-01-31"
+      }
+    },
+    {
+      "id": "sample-2",
+      "title": "Integrate with Cron Jobs",
+      "description": "Sync cron jobs to task board automatically",
+      "status": "todo",
+      "priority": "high",
+      "category": "automation",
+      "createdAt": "2026-01-31T00:00:00.000Z",
+      "updatedAt": "2026-01-31T00:00:00.000Z",
+      "completedAt": null,
+      "source": "manual",
+      "metadata": {}
+    },
+    {
+      "id": "sample-3",
+      "title": "Add Dark Mode Support",
+      "description": "Implement dark theme for better UX",
+      "status": "backlog",
+      "priority": "medium",
+      "category": "project",
+      "createdAt": "2026-01-31T00:00:00.000Z",
+      "updatedAt": "2026-01-31T00:00:00.000Z",
+      "completedAt": null,
+      "source": "manual",
+      "metadata": {}
+    }
+  ],
+  "lastUpdated": "2026-01-31T00:00:00.000Z"
+}

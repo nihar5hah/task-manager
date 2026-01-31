@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager - Kanban Board</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-left">
+                <h1>📋 Task Manager</h1>
+                <div class="stats-summary" id="statsSummary">
+                    <span class="stat-item">Total: <strong id="totalTasks">0</strong></span>
+                    <span class="stat-item">Done: <strong id="doneTasks">0</strong></span>
+                    <span class="stat-item">Today: <strong id="todayTasks">0</strong></span>
+                </div>
+            </div>
+            <div class="header-right">
+                <button id="themeToggle" class="btn btn-icon" title="Toggle Dark Mode">
+                    <span class="theme-icon">🌙</span>
+                </button>
+                <button id="refreshBtn" class="btn btn-icon" title="Refresh">🔄</button>
+                <button id="addTaskBtn" class="btn btn-primary">+ Add Task</button>
+            </div>
+        </header>
+
+        <!-- Filters -->
+        <div class="filters">
+            <div class="filter-group">
+                <label>Search:</label>
+                <input type="text" id="searchInput" placeholder="Search tasks...">
+            </div>
+            <div class="filter-group">
+                <label>Category:</label>
+                <select id="categoryFilter">
+                    <option value="">All</option>
+                    <option value="automation">🤖 Automation</option>
+                    <option value="project">🚀 Project</option>
+                    <option value="communication">💬 Communication</option>
+                    <option value="maintenance">🔧 Maintenance</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>Priority:</label>
+                <select id="priorityFilter">
+                    <option value="">All</option>
+                    <option value="urgent">🔴 Urgent</option>
+                    <option value="high">🟠 High</option>
+                    <option value="medium">🟡 Medium</option>
+                    <option value="low">🟢 Low</option>
+                </select>
+            </div>
+        </div>
+
+        <!-- Kanban Board -->
+        <div class="kanban-board" id="kanbanBoard">
+            <div class="kanban-column" data-status="backlog">
+                <div class="column-header">
+                    <h2>📥 Backlog</h2>
+                    <span class="task-count" data-count="backlog">0</span>
+                </div>
+                <div class="task-list" id="backlog-tasks"></div>
+            </div>
+
+            <div class="kanban-column" data-status="todo">
+                <div class="column-header">
+                    <h2>📝 To Do</h2>
+                    <span class="task-count" data-count="todo">0</span>
+                </div>
+                <div class="task-list" id="todo-tasks"></div>
+            </div>
+
+            <div class="kanban-column" data-status="in-progress">
+                <div class="column-header">
+                    <h2>⚡ In Progress</h2>
+                    <span class="task-count" data-count="in-progress">0</span>
+                </div>
+                <div class="task-list" id="in-progress-tasks"></div>
+            </div>
+
+            <div class="kanban-column" data-status="done">
+                <div class="column-header">
+                    <h2>✅ Done</h2>
+                    <span class="task-count" data-count="done">0</span>
+                </div>
+                <div class="task-list" id="done-tasks"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Task Modal -->
+    <div id="taskModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">Add New Task</h2>
+                <button class="close-btn" id="closeModal">&times;</button>
+            </div>
+            <form id="taskForm">
+                <input type="hidden" id="taskId">
+
+                <div class="form-group">
+                    <label for="taskTitle">Title *</label>
+                    <input type="text" id="taskTitle" required placeholder="Task title...">
+                </div>
+
+                <div class="form-group">
+                    <label for="taskDescription">Description</label>
+                    <textarea id="taskDescription" rows="4" placeholder="Task description..."></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskStatus">Status</label>
+                        <select id="taskStatus">
+                            <option value="backlog">Backlog</option>
+                            <option value="todo">To Do</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="done">Done</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskPriority">Priority</label>
+                        <select id="taskPriority">
+                            <option value="low">Low</option>
+                            <option value="medium" selected>Medium</option>
+                            <option value="high">High</option>
+                            <option value="urgent">Urgent</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="taskCategory">Category</label>
+                        <select id="taskCategory">
+                            <option value="project">Project</option>
+                            <option value="automation">Automation</option>
+                            <option value="communication">Communication</option>
+                            <option value="maintenance">Maintenance</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="taskSource">Source</label>
+                        <select id="taskSource">
+                            <option value="manual" selected>Manual</option>
+                            <option value="cron">Cron</option>
+                            <option value="conversation">Conversation</option>
+                            <option value="email">Email</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="deleteTaskBtn" class="btn btn-danger" style="display: none;">Delete</button>
+                    <div class="modal-actions-right">
+                        <button type="button" id="cancelBtn" class="btn btn-secondary">Cancel</button>
+                        <button type="submit" class="btn btn-primary">Save Task</button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script src="/js/app.js"></script>
+    <script src="/js/kanban.js"></script>
+</body>
+</html>

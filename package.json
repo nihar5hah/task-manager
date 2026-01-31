@@ -1,18 +1,21 @@
 {
   "name": "task-manager",
-  "version": "1.0.0",
-  "description": "Kanban-style task management system with cron integration",
+  "version": "2.0.0",
+  "description": "Modern task management system with auto-sync and Obsidian/Linear-inspired UI",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
-  "keywords": ["task", "kanban", "management", "cron"],
+  "keywords": ["task", "kanban", "management", "cron", "sync"],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "express": "^4.18.2",
     "body-parser": "^1.20.2",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "ws": "^8.14.2",
+    "glob": "^10.3.10",
+    "chokidar": "^3.5.3"
   }
 }

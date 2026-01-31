@@ -3,6 +3,9 @@ const bodyParser = require('body-parser');
 const cors = require('cors');
 const fs = require('fs').promises;
 const path = require('path');
+const http = require('http');
+const WebSocket = require('ws');
+const SyncManager = require('./sync-manager');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -10,10 +13,49 @@ const DATA_DIR = path.join(__dirname, 'data');
 const TASKS_FILE = path.join(DATA_DIR, 'tasks.json');
 const CONFIG_FILE = path.join(DATA_DIR, 'config.json');
 
+// Create HTTP server
+const server = http.createServer(app);
+
+// WebSocket server
+const wss = new WebSocket.Server({ server });
+const clients = new Set();
+
+// Broadcast to all connected clients
+function broadcast(message) {
+    const data = JSON.stringify(message);
+    clients.forEach(client => {
+        if (client.readyState === WebSocket.OPEN) {
+            client.send(data);
+        }
+    });
+}
+
+// WebSocket connection handler
+wss.on('connection', (ws) => {
+    console.log('[WebSocket] Client connected');
+    clients.add(ws);
+
+    ws.on('close', () => {
+        console.log('[WebSocket] Client disconnected');
+        clients.delete(ws);
+    });
+
+    ws.on('error', (error) => {
+        console.error('[WebSocket] Error:', error);
+        clients.delete(ws);
+    });
+
+    // Send initial connection success
+    ws.send(JSON.stringify({ type: 'connected', message: 'WebSocket connected' }));
+});
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json());
 app.use(express.static('public'));
+
+// Initialize sync manager
+let syncManager;
 
 // Initialize data files if they don't exist
 async function initializeDataFiles() {
@@ -39,6 +81,9 @@ async function initializeDataFiles() {
         };
         await fs.writeFile(CONFIG_FILE, JSON.stringify(defaultConfig, null, 2));
     }
+
+    // Initialize sync manager
+    syncManager = new SyncManager(TASKS_FILE);
 }
 
 // Helper functions
@@ -50,6 +95,9 @@ async function readTasks() {
 async function writeTasks(data) {
     data.lastUpdated = new Date().toISOString();
     await fs.writeFile(TASKS_FILE, JSON.stringify(data, null, 2));
+    
+    // Broadcast update to all clients
+    broadcast({ type: 'tasks_updated', tasks: data.tasks });
 }
 
 async function readConfig() {
@@ -106,8 +154,12 @@ app.post('/api/tasks', async (req, res) => {
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             completedAt: null,
+            dueDate: req.body.dueDate || null,
             source: req.body.source || 'manual',
-            metadata: req.body.metadata || {}
+            metadata: req.body.metadata || {},
+            tags: req.body.tags || [],
+            dependencies: req.body.dependencies || [],
+            subtasks: req.body.subtasks || []
         };
         data.tasks.push(newTask);
         await writeTasks(data);
@@ -257,15 +309,127 @@ app.post('/api/tasks/bulk-update', async (req, res) => {
     }
 });
 
+// Sync tasks from external sources
+app.post('/api/sync', async (req, res) => {
+    try {
+        console.log('[API] Manual sync triggered');
+        const syncedTasks = await syncManager.syncAll();
+        const data = await readTasks();
+        
+        const mergedTasks = await syncManager.mergeTasks(data.tasks, syncedTasks);
+        data.tasks = mergedTasks;
+        
+        await writeTasks(data);
+        
+        res.json({ 
+            message: 'Sync completed',
+            synced: syncedTasks.length,
+            total: mergedTasks.length
+        });
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get task relationships (for graph view)
+app.get('/api/tasks/relationships', async (req, res) => {
+    try {
+        const data = await readTasks();
+        const relationships = [];
+
+        data.tasks.forEach(task => {
+            // Add dependency relationships
+            if (task.dependencies && task.dependencies.length > 0) {
+                task.dependencies.forEach(depId => {
+                    relationships.push({
+                        from: depId,
+                        to: task.id,
+                        type: 'dependency'
+                    });
+                });
+            }
+
+            // Add tag-based relationships
+            if (task.tags && task.tags.length > 0) {
+                data.tasks.forEach(otherTask => {
+                    if (otherTask.id !== task.id && otherTask.tags) {
+                        const commonTags = task.tags.filter(t => otherTask.tags.includes(t));
+                        if (commonTags.length > 0) {
+                            relationships.push({
+                                from: task.id,
+                                to: otherTask.id,
+                                type: 'tag',
+                                tags: commonTags
+                            });
+                        }
+                    }
+                });
+            }
+        });
+
+        res.json(relationships);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Background sync every 5 minutes
+let syncInterval;
+function startBackgroundSync() {
+    // Run initial sync after 10 seconds
+    setTimeout(async () => {
+        try {
+            console.log('[Background Sync] Running initial sync...');
+            const syncedTasks = await syncManager.syncAll();
+            const data = await readTasks();
+            const mergedTasks = await syncManager.mergeTasks(data.tasks, syncedTasks);
+            data.tasks = mergedTasks;
+            await writeTasks(data);
+            console.log('[Background Sync] Initial sync completed');
+        } catch (error) {
+            console.error('[Background Sync] Error:', error);
+        }
+    }, 10000);
+
+    // Run sync every 5 minutes
+    syncInterval = setInterval(async () => {
+        try {
+            console.log('[Background Sync] Running scheduled sync...');
+            const syncedTasks = await syncManager.syncAll();
+            const data = await readTasks();
+            const mergedTasks = await syncManager.mergeTasks(data.tasks, syncedTasks);
+            data.tasks = mergedTasks;
+            await writeTasks(data);
+            console.log('[Background Sync] Scheduled sync completed');
+        } catch (error) {
+            console.error('[Background Sync] Error:', error);
+        }
+    }, 5 * 60 * 1000); // 5 minutes
+}
+
 // Initialize and start server
 initializeDataFiles().then(() => {
-    app.listen(PORT, () => {
+    // Start background sync
+    startBackgroundSync();
+
+    server.listen(PORT, () => {
         console.log(`Task Manager server running on http://localhost:${PORT}`);
+        console.log(`WebSocket server running on ws://localhost:${PORT}`);
         console.log(`API endpoints available at http://localhost:${PORT}/api/*`);
     });
 }).catch(error => {
     console.error('Failed to initialize server:', error);
     process.exit(1);
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received, closing server...');
+    if (syncInterval) clearInterval(syncInterval);
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
+    });
 });
 
 // Export for Vercel

@@ -2,10 +2,9 @@ const fs = require('fs').promises;
 const path = require('path');
 const { exec } = require('child_process');
 const { promisify } = require('util');
-const glob = require('glob');
+const { glob } = require('glob');
 
 const execAsync = promisify(exec);
-const globAsync = promisify(glob);
 
 class SyncManager {
     constructor(tasksFile) {
@@ -126,7 +125,7 @@ class SyncManager {
     async syncMemoryLogs() {
         try {
             const tasks = [];
-            const memoryFiles = await globAsync(path.join(this.memoryDir, '*.md'));
+            const memoryFiles = await glob(path.join(this.memoryDir, '*.md'));
             
             // Only scan recent files (last 30 days)
             const thirtyDaysAgo = Date.now() - (30 * 24 * 60 * 60 * 1000);
@@ -194,7 +193,7 @@ class SyncManager {
     async syncProjectFiles() {
         try {
             const tasks = [];
-            const taskFiles = await globAsync(path.join(this.workspaceRoot, '**/TASK.md'), {
+            const taskFiles = await glob(path.join(this.workspaceRoot, '**/TASK.md'), {
                 ignore: ['**/node_modules/**', '**/dist/**', '**/.git/**']
             });
 

@@ -267,3 +267,6 @@ initializeDataFiles().then(() => {
     console.error('Failed to initialize server:', error);
     process.exit(1);
 });
+
+// Export for Vercel
+module.exports = app;

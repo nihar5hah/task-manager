@@ -7,6 +7,7 @@ class TaskManager {
             status: '',
             priority: '',
             category: '',
+            recurring: '',
             search: ''
         };
         this.currentView = 'board';
@@ -365,6 +366,14 @@ class TaskManager {
             if (this.filters.status && task.status !== this.filters.status) return false;
             if (this.filters.priority && task.priority !== this.filters.priority) return false;
             if (this.filters.category && task.category !== this.filters.category) return false;
+            
+            // Recurring filter
+            if (this.filters.recurring) {
+                const isDaily = task.tags && task.tags.includes('daily');
+                if (this.filters.recurring === 'daily' && !isDaily) return false;
+                if (this.filters.recurring === 'non-daily' && isDaily) return false;
+            }
+            
             if (this.filters.search) {
                 const search = this.filters.search.toLowerCase();
                 return task.title.toLowerCase().includes(search) ||
@@ -417,17 +426,23 @@ class TaskManager {
             low: '🟢'
         };
 
+        const isDaily = task.tags && task.tags.includes('daily');
+        const dailyIndicator = isDaily ? '<span class="daily-badge" title="Daily recurring task">🔄</span>' : '';
+
         const checkbox = this.bulkSelectMode ? 
             `<input type="checkbox" ${this.selectedTasks.has(task.id) ? 'checked' : ''} 
                     onchange="app.toggleTaskSelection('${task.id}')" 
                     onclick="event.stopPropagation()">` : '';
 
         return `
-            <div class="task-card" data-task-id="${task.id}" draggable="true" 
+            <div class="task-card ${isDaily ? 'daily-task' : ''}" data-task-id="${task.id}" draggable="true" 
                  ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)"
                  onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
                 ${checkbox}
-                <div class="task-priority">${priorityEmojis[task.priority]}</div>
+                <div class="task-header-row">
+                    <div class="task-priority">${priorityEmojis[task.priority]}</div>
+                    ${dailyIndicator}
+                </div>
                 <h4>${task.title}</h4>
                 ${task.description ? `<p>${task.description.substring(0, 100)}...</p>` : ''}
                 ${task.tags && task.tags.length ? `
@@ -443,7 +458,11 @@ class TaskManager {
         const tasks = this.getFilteredTasks();
         const tbody = document.getElementById('listViewBody');
         
-        tbody.innerHTML = tasks.map(task => `
+        tbody.innerHTML = tasks.map(task => {
+            const isDaily = task.tags && task.tags.includes('daily');
+            const dailyIcon = isDaily ? '🔄 ' : '';
+            
+            return `
             <tr onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
                 <td>
                     ${this.bulkSelectMode ? 
@@ -451,13 +470,13 @@ class TaskManager {
                                 onchange="app.toggleTaskSelection('${task.id}')" 
                                 onclick="event.stopPropagation()">` : ''}
                 </td>
-                <td>${task.title}</td>
+                <td>${dailyIcon}${task.title}</td>
                 <td><span class="badge badge-${task.status}">${task.status}</span></td>
                 <td><span class="badge badge-${task.priority}">${task.priority}</span></td>
                 <td>${task.category}</td>
                 <td>${task.dueDate || '-'}</td>
             </tr>
-        `).join('');
+        `}).join('');
     }
 
     renderCalendarView() {

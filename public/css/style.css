@@ -1494,3 +1494,47 @@ body {
     border-radius: 8px;
     background: var(--bg-secondary);
 }
+
+/* Daily Task Indicator */
+.daily-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    padding: 2px 6px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 4px;
+    margin-left: 8px;
+    box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+    animation: pulse-daily 2s ease-in-out infinite;
+}
+
+@keyframes pulse-daily {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+.task-card.daily-task {
+    border-left: 3px solid #667eea;
+}
+
+.task-card .task-header-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+}
+
+.task-card .task-priority {
+    margin-bottom: 0;
+}
+
+/* Daily filter chip styling */
+.filter-chip[data-filter="recurring"] {
+    font-weight: 500;
+}
+
+.filter-chip[data-filter="recurring"].active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}

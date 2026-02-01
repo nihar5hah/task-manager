@@ -1,4 +1,5 @@
-// Task Manager Application
+// Enhanced app.js with Calendar, Graph, and Analytics views
+
 class TaskManager {
     constructor() {
         this.tasks = [];
@@ -11,6 +12,7 @@ class TaskManager {
         this.currentView = 'board';
         this.bulkSelectMode = false;
         this.selectedTasks = new Set();
+        this.currentMonth = new Date();
         this.init();
     }
 
@@ -100,6 +102,17 @@ class TaskManager {
         // Theme Toggle
         document.getElementById('themeToggle').addEventListener('click', () => {
             this.toggleTheme();
+        });
+
+        // Calendar Navigation
+        document.getElementById('prevMonth')?.addEventListener('click', () => {
+            this.currentMonth.setMonth(this.currentMonth.getMonth() - 1);
+            this.renderCalendarView();
+        });
+
+        document.getElementById('nextMonth')?.addEventListener('click', () => {
+            this.currentMonth.setMonth(this.currentMonth.getMonth() + 1);
+            this.renderCalendarView();
         });
 
         // Modal backdrop click
@@ -211,6 +224,7 @@ class TaskManager {
 
     async syncTasks() {
         try {
+            this.showToast('Syncing tasks...', 'info');
             const response = await fetch('/api/sync', {
                 method: 'POST'
             });
@@ -219,7 +233,7 @@ class TaskManager {
 
             await this.loadTasks();
             this.render();
-            this.showToast('Tasks synced', 'success');
+            this.showToast('Tasks synced successfully', 'success');
         } catch (error) {
             console.error('Error syncing tasks:', error);
             this.showToast('Failed to sync tasks', 'error');
@@ -365,6 +379,12 @@ class TaskManager {
             this.renderBoardView();
         } else if (this.currentView === 'list') {
             this.renderListView();
+        } else if (this.currentView === 'calendar') {
+            this.renderCalendarView();
+        } else if (this.currentView === 'graph') {
+            this.renderGraphView();
+        } else if (this.currentView === 'analytics') {
+            this.renderAnalyticsView();
         }
 
         this.updateCategoryCounts();
@@ -438,6 +458,209 @@ class TaskManager {
                 <td>${task.dueDate || '-'}</td>
             </tr>
         `).join('');
+    }
+
+    renderCalendarView() {
+        const container = document.getElementById('calendarGrid');
+        const monthTitle = document.getElementById('calendarMonth');
+        
+        const year = this.currentMonth.getFullYear();
+        const month = this.currentMonth.getMonth();
+        
+        monthTitle.textContent = this.currentMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+        
+        const firstDay = new Date(year, month, 1).getDay();
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        
+        let html = '<div class="calendar-weekdays">';
+        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
+            html += `<div class="weekday">${day}</div>`;
+        });
+        html += '</div><div class="calendar-days">';
+        
+        // Empty cells before month starts
+        for (let i = 0; i < firstDay; i++) {
+            html += '<div class="calendar-day empty"></div>';
+        }
+        
+        // Days of month
+        for (let day = 1; day <= daysInMonth; day++) {
+            const date = new Date(year, month, day);
+            const dateStr = date.toISOString().split('T')[0];
+            const dayTasks = this.tasks.filter(t => t.dueDate === dateStr);
+            
+            const isToday = new Date().toDateString() === date.toDateString();
+            
+            html += `
+                <div class="calendar-day ${isToday ? 'today' : ''}" data-date="${dateStr}">
+                    <div class="day-number">${day}</div>
+                    <div class="day-tasks">
+                        ${dayTasks.slice(0, 3).map(t => `
+                            <div class="mini-task ${t.status}" onclick="app.openTaskModal(app.tasks.find(task => task.id === '${t.id}'))">
+                                ${t.title}
+                            </div>
+                        `).join('')}
+                        ${dayTasks.length > 3 ? `<div class="more-tasks">+${dayTasks.length - 3} more</div>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+        
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    renderGraphView() {
+        const canvas = document.getElementById('graphCanvas');
+        const ctx = canvas.getContext('2d');
+        
+        // Set canvas size
+        canvas.width = canvas.offsetWidth;
+        canvas.height = canvas.offsetHeight;
+        
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        // Simple dependency graph visualization
+        const tasks = this.tasks.filter(t => t.dependencies && t.dependencies.length > 0);
+        
+        if (tasks.length === 0) {
+            ctx.fillStyle = '#666';
+            ctx.font = '16px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText('No task dependencies to visualize', canvas.width / 2, canvas.height / 2);
+            return;
+        }
+        
+        // Draw nodes and connections
+        const nodeRadius = 30;
+        const nodes = {};
+        let y = 50;
+        
+        this.tasks.forEach((task, i) => {
+            const x = 100 + (i % 5) * 150;
+            nodes[task.id] = { x, y: y + Math.floor(i / 5) * 100, task };
+        });
+        
+        // Draw edges
+        ctx.strokeStyle = '#555';
+        ctx.lineWidth = 2;
+        tasks.forEach(task => {
+            const from = nodes[task.id];
+            task.dependencies.forEach(depId => {
+                const to = nodes[depId];
+                if (from && to) {
+                    ctx.beginPath();
+                    ctx.moveTo(from.x, from.y);
+                    ctx.lineTo(to.x, to.y);
+                    ctx.stroke();
+                }
+            });
+        });
+        
+        // Draw nodes
+        Object.values(nodes).forEach(({ x, y, task }) => {
+            const colors = {
+                backlog: '#6b7280',
+                todo: '#3b82f6',
+                'in-progress': '#f59e0b',
+                done: '#10b981'
+            };
+            
+            ctx.fillStyle = colors[task.status] || '#666';
+            ctx.beginPath();
+            ctx.arc(x, y, nodeRadius, 0, Math.PI * 2);
+            ctx.fill();
+            
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px Inter';
+            ctx.textAlign = 'center';
+            ctx.fillText(task.title.substring(0, 10), x, y);
+        });
+    }
+
+    renderAnalyticsView() {
+        const container = document.getElementById('analyticsView');
+        
+        const stats = {
+            total: this.tasks.length,
+            byStatus: {},
+            byPriority: {},
+            byCategory: {},
+            completed: this.tasks.filter(t => t.status === 'done').length,
+            overdue: this.tasks.filter(t => t.dueDate && new Date(t.dueDate) < new Date() && t.status !== 'done').length
+        };
+        
+        ['backlog', 'todo', 'in-progress', 'done'].forEach(status => {
+            stats.byStatus[status] = this.tasks.filter(t => t.status === status).length;
+        });
+        
+        ['urgent', 'high', 'medium', 'low'].forEach(priority => {
+            stats.byPriority[priority] = this.tasks.filter(t => t.priority === priority).length;
+        });
+        
+        ['project', 'automation', 'communication', 'maintenance'].forEach(category => {
+            stats.byCategory[category] = this.tasks.filter(t => t.category === category).length;
+        });
+        
+        container.innerHTML = `
+            <div style="padding: 24px; max-width: 1200px; margin: 0 auto;">
+                <h2 style="margin-bottom: 24px; color: var(--text-primary);">Task Analytics</h2>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px;">
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.total}</div>
+                        <div class="stat-label">Total Tasks</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.completed}</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.byStatus['in-progress']}</div>
+                        <div class="stat-label">In Progress</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value">${stats.overdue}</div>
+                        <div class="stat-label">Overdue</div>
+                    </div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px;">
+                    <div class="chart-container">
+                        <h3>By Status</h3>
+                        ${Object.entries(stats.byStatus).map(([status, count]) => `
+                            <div class="chart-bar">
+                                <span class="chart-label">${status}</span>
+                                <div class="chart-bar-fill" style="width: ${(count / stats.total * 100)}%; background: var(--${status}-color, #666)"></div>
+                                <span class="chart-value">${count}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>By Priority</h3>
+                        ${Object.entries(stats.byPriority).map(([priority, count]) => `
+                            <div class="chart-bar">
+                                <span class="chart-label">${priority}</span>
+                                <div class="chart-bar-fill" style="width: ${(count / stats.total * 100)}%; background: var(--priority-${priority}, #666)"></div>
+                                <span class="chart-value">${count}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3>By Category</h3>
+                        ${Object.entries(stats.byCategory).map(([category, count]) => `
+                            <div class="chart-bar">
+                                <span class="chart-label">${category}</span>
+                                <div class="chart-bar-fill" style="width: ${(count / stats.total * 100)}%"></div>
+                                <span class="chart-value">${count}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            </div>
+        `;
     }
 
     setupDragAndDrop() {

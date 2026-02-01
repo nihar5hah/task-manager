@@ -1,0 +1,25 @@
+{
+  "presets": [
+    {
+      "id": "06ad9716-0a49-4519-9c05-0d0c1dae3589",
+      "name": "Urgent Tasks",
+      "filters": {
+        "priorities": [
+          "urgent"
+        ],
+        "statuses": []
+      }
+    },
+    {
+      "id": "e872fc93-0111-43ae-ab6b-cfc64a517e3c",
+      "name": "In Progress",
+      "filters": {
+        "statuses": [
+          "in-progress"
+        ],
+        "priorities": []
+      }
+    }
+  ],
+  "searchHistory": []
+}

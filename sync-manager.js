@@ -35,6 +35,10 @@ class SyncManager {
             const projectTasks = await this.syncProjectFiles();
             tasks.push(...projectTasks);
 
+            // 5. Sync from GitHub issues
+            const githubTasks = await this.syncGitHubIssues();
+            tasks.push(...githubTasks);
+
             console.log(`[Sync] Found ${tasks.length} tasks from external sources`);
             return tasks;
         } catch (error) {
@@ -45,9 +49,17 @@ class SyncManager {
 
     async syncCronJobs() {
         try {
-            const { stdout } = await execAsync('clawdbot cron list --json 2>/dev/null || echo "[]"');
-            const cronJobs = JSON.parse(stdout.trim() || '[]');
-            
+            const cronFilePath = path.join(this.workspaceRoot, 'data', 'cron-tasks.json');
+            const fileExists = await fs.access(cronFilePath).then(() => true).catch(() => false);
+
+            if (!fileExists) {
+                console.warn(`[Sync] Cron file not found: ${cronFilePath}`);
+                return [];
+            }
+
+            const fileContent = await fs.readFile(cronFilePath, 'utf8');
+            const cronJobs = JSON.parse(fileContent.trim() || '[]');
+
             return cronJobs.map(job => ({
                 title: job.name || job.command,
                 description: `Cron: ${job.schedule}\nCommand: ${job.command}`,
@@ -200,11 +212,11 @@ class SyncManager {
             for (const file of taskFiles) {
                 const content = await fs.readFile(file, 'utf8');
                 const projectName = path.basename(path.dirname(file));
-                
+
                 // Parse markdown task lists
                 const lines = content.split('\n');
                 let currentSection = 'backlog';
-                
+
                 for (const line of lines) {
                     // Detect section headers
                     if (/^#+\s*(backlog|todo|in[-\s]?progress|done)/i.test(line)) {
@@ -212,13 +224,13 @@ class SyncManager {
                         currentSection = match[1].toLowerCase().replace(/\s+/g, '-');
                         continue;
                     }
-                    
+
                     // Parse task items
                     const taskMatch = line.match(/^[\s-]*\[([ x✓])\]\s*(.+)$/i);
                     if (taskMatch) {
                         const [, checked, taskText] = taskMatch;
                         const isDone = checked.toLowerCase() === 'x' || checked === '✓';
-                        
+
                         tasks.push({
                             title: `[${projectName}] ${taskText}`,
                             description: `From project task file: ${file}`,
@@ -239,6 +251,128 @@ class SyncManager {
             return tasks;
         } catch (error) {
             console.error('[Sync] Error syncing project files:', error.message);
+            return [];
+        }
+    }
+
+    async syncGitHubIssues() {
+        try {
+            console.log('[Sync] Syncing GitHub issues...');
+            const tasks = [];
+
+            // Get current git repository info
+            let repoInfo;
+            try {
+                const { stdout: remoteUrl } = await execAsync('git remote get-url origin 2>/dev/null');
+                const repoMatch = remoteUrl.match(/github\.com[:/](.+?)\/(.+?)(\.git)?$/);
+
+                if (!repoMatch) {
+                    console.log('[Sync] Not a GitHub repository, skipping GitHub sync');
+                    return [];
+                }
+
+                const [, owner, repo] = repoMatch;
+                repoInfo = { owner, repo: repo.replace('.git', '') };
+                console.log(`[Sync] Detected GitHub repo: ${owner}/${repoInfo.repo}`);
+            } catch (error) {
+                console.log('[Sync] Not in a git repository, skipping GitHub sync');
+                return [];
+            }
+
+            // Fetch issues using gh CLI
+            try {
+                const { stdout } = await execAsync(
+                    `gh issue list --repo ${repoInfo.owner}/${repoInfo.repo} --json number,title,body,state,labels,assignees,createdAt,updatedAt,milestone --limit 100`
+                );
+
+                const issues = JSON.parse(stdout.trim() || '[]');
+                console.log(`[Sync] Found ${issues.length} GitHub issues`);
+
+                for (const issue of issues) {
+                    // Map GitHub issue state to task status
+                    let status = 'backlog';
+                    if (issue.state === 'CLOSED') {
+                        status = 'done';
+                    } else {
+                        // Check labels for status hints
+                        const labelNames = issue.labels.map(l => l.name.toLowerCase());
+                        if (labelNames.includes('in progress') || labelNames.includes('wip')) {
+                            status = 'in-progress';
+                        } else if (labelNames.includes('todo') || labelNames.includes('ready')) {
+                            status = 'todo';
+                        }
+                    }
+
+                    // Determine priority from labels
+                    let priority = 'medium';
+                    const labelNames = issue.labels.map(l => l.name.toLowerCase());
+                    if (labelNames.some(l => l.includes('critical') || l.includes('urgent') || l.includes('p0'))) {
+                        priority = 'urgent';
+                    } else if (labelNames.some(l => l.includes('high') || l.includes('p1'))) {
+                        priority = 'high';
+                    } else if (labelNames.some(l => l.includes('low') || l.includes('p3'))) {
+                        priority = 'low';
+                    }
+
+                    // Determine category from labels
+                    let category = 'project';
+                    if (labelNames.some(l => l.includes('bug') || l.includes('fix'))) {
+                        category = 'maintenance';
+                    } else if (labelNames.some(l => l.includes('automation') || l.includes('ci'))) {
+                        category = 'automation';
+                    } else if (labelNames.some(l => l.includes('communication') || l.includes('notification'))) {
+                        category = 'communication';
+                    }
+
+                    // Build description
+                    let description = issue.body || '';
+                    if (issue.assignees && issue.assignees.length > 0) {
+                        description += `\n\nAssigned to: ${issue.assignees.map(a => a.login).join(', ')}`;
+                    }
+                    if (issue.milestone) {
+                        description += `\n\nMilestone: ${issue.milestone.title}`;
+                    }
+
+                    // Extract due date from description or milestone
+                    let dueDate = null;
+                    const dueDateMatch = description.match(/due:?\s*(\d{4}-\d{2}-\d{2})/i);
+                    if (dueDateMatch) {
+                        dueDate = dueDateMatch[1];
+                    }
+
+                    tasks.push({
+                        title: `#${issue.number}: ${issue.title}`,
+                        description: description.substring(0, 500), // Limit description length
+                        status,
+                        priority,
+                        category,
+                        source: 'github',
+                        metadata: {
+                            githubIssueNumber: issue.number,
+                            githubState: issue.state,
+                            githubUrl: `https://github.com/${repoInfo.owner}/${repoInfo.repo}/issues/${issue.number}`,
+                            githubRepo: `${repoInfo.owner}/${repoInfo.repo}`,
+                            githubCreatedAt: issue.createdAt,
+                            githubUpdatedAt: issue.updatedAt
+                        },
+                        tags: ['github', 'issue', ...issue.labels.map(l => l.name.toLowerCase())],
+                        dueDate
+                    });
+                }
+
+                return tasks;
+            } catch (error) {
+                if (error.message.includes('gh: command not found')) {
+                    console.log('[Sync] GitHub CLI (gh) not installed, skipping GitHub sync');
+                } else if (error.message.includes('authentication')) {
+                    console.log('[Sync] GitHub authentication required. Run: gh auth login');
+                } else {
+                    console.error('[Sync] Error fetching GitHub issues:', error.message);
+                }
+                return [];
+            }
+        } catch (error) {
+            console.error('[Sync] Error in syncGitHubIssues:', error.message);
             return [];
         }
     }

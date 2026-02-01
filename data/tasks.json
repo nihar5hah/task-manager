@@ -1,46 +1,144 @@
 {
   "tasks": [
     {
-      "id": "sample-1",
-      "title": "Setup Task Manager System",
-      "description": "Build complete Kanban board with all features",
+      "id": "task-1",
+      "title": "Task A",
+      "description": "Root task",
       "status": "in-progress",
-      "priority": "urgent",
+      "priority": "high",
       "category": "project",
       "createdAt": "2026-01-31T00:00:00.000Z",
       "updatedAt": "2026-01-31T00:00:00.000Z",
       "completedAt": null,
-      "source": "manual",
-      "metadata": {
-        "deadline": "2026-01-31"
-      }
-    },
-    {
-      "id": "sample-2",
-      "title": "Integrate with Cron Jobs",
-      "description": "Sync cron jobs to task board automatically",
-      "status": "todo",
-      "priority": "high",
-      "category": "automation",
-      "createdAt": "2026-01-31T00:00:00.000Z",
-      "updatedAt": "2026-01-31T00:00:00.000Z",
-      "completedAt": null,
-      "source": "manual",
+      "tags": [
+        "graph"
+      ],
+      "dependencies": [
+        "task-2"
+      ],
       "metadata": {}
     },
     {
-      "id": "sample-3",
-      "title": "Add Dark Mode Support",
-      "description": "Implement dark theme for better UX",
-      "status": "backlog",
+      "id": "task-2",
+      "title": "Task B",
+      "description": "Dependent task",
+      "status": "todo",
       "priority": "medium",
       "category": "project",
       "createdAt": "2026-01-31T00:00:00.000Z",
       "updatedAt": "2026-01-31T00:00:00.000Z",
       "completedAt": null,
-      "source": "manual",
+      "tags": [
+        "graph"
+      ],
+      "dependencies": [
+        "task-3"
+      ],
       "metadata": {}
+    },
+    {
+      "id": "task-3",
+      "title": "Task C",
+      "description": "Final dependent task",
+      "status": "backlog",
+      "priority": "low",
+      "category": "project",
+      "createdAt": "2026-01-31T00:00:00.000Z",
+      "updatedAt": "2026-01-31T00:00:00.000Z",
+      "completedAt": null,
+      "tags": [
+        "graph"
+      ],
+      "metadata": {}
+    },
+    {
+      "id": "d0c97247-b7b1-4ec0-8f99-dc619d645d65",
+      "title": "Heartbeat Check: email",
+      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
+      "status": "in-progress",
+      "priority": "low",
+      "category": "automation",
+      "source": "heartbeat",
+      "metadata": {
+        "checkType": "email",
+        "lastRun": 1769925607
+      },
+      "tags": [
+        "heartbeat",
+        "monitoring",
+        "recurring"
+      ],
+      "createdAt": "2026-02-01T09:30:05.071Z",
+      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "completedAt": null,
+      "dueDate": null
+    },
+    {
+      "id": "9d836ba1-010e-4cd8-ba1b-a7ec9272c2ee",
+      "title": "Heartbeat Check: calendar",
+      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
+      "status": "in-progress",
+      "priority": "low",
+      "category": "automation",
+      "source": "heartbeat",
+      "metadata": {
+        "checkType": "calendar",
+        "lastRun": 1769925607
+      },
+      "tags": [
+        "heartbeat",
+        "monitoring",
+        "recurring"
+      ],
+      "createdAt": "2026-02-01T09:30:05.071Z",
+      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "completedAt": null,
+      "dueDate": null
+    },
+    {
+      "id": "e9d78543-071f-4dfe-aa52-7ce0bfa6bb54",
+      "title": "Heartbeat Check: whatsapp",
+      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
+      "status": "in-progress",
+      "priority": "low",
+      "category": "automation",
+      "source": "heartbeat",
+      "metadata": {
+        "checkType": "whatsapp",
+        "lastRun": 1769925607
+      },
+      "tags": [
+        "heartbeat",
+        "monitoring",
+        "recurring"
+      ],
+      "createdAt": "2026-02-01T09:30:05.071Z",
+      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "completedAt": null,
+      "dueDate": null
+    },
+    {
+      "id": "69f4cb89-c1e0-4307-bf05-95aad9357404",
+      "title": "Heartbeat Check: git",
+      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
+      "status": "in-progress",
+      "priority": "low",
+      "category": "automation",
+      "source": "heartbeat",
+      "metadata": {
+        "checkType": "git",
+        "lastRun": 1769925607
+      },
+      "tags": [
+        "heartbeat",
+        "monitoring",
+        "recurring"
+      ],
+      "createdAt": "2026-02-01T09:30:05.071Z",
+      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "completedAt": null,
+      "dueDate": null
     }
   ],
-  "lastUpdated": "2026-01-31T00:00:00.000Z"
+  "lastUpdated": "2026-02-01T09:36:42.781Z"
 }

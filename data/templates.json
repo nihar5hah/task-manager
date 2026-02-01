@@ -1,0 +1,28 @@
+{
+  "templates": [
+    {
+      "id": "850ebf32-8c31-45df-a19b-96802ef99885",
+      "name": "Bug Fix",
+      "title": "Fix: ",
+      "description": "## Problem\n\n## Solution\n\n## Testing",
+      "priority": "high",
+      "category": "project",
+      "tags": [
+        "bug",
+        "fix"
+      ]
+    },
+    {
+      "id": "a77827e6-5899-40af-b1a6-5197ce87e4ef",
+      "name": "Feature Request",
+      "title": "Feature: ",
+      "description": "## Description\n\n## Requirements\n\n## Acceptance Criteria",
+      "priority": "medium",
+      "category": "project",
+      "tags": [
+        "feature",
+        "enhancement"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+[
+    {
+        "id": "1",
+        "name": "Daily Backup",
+        "schedule": "0 3 * * *",
+        "command": "backup.sh",
+        "enabled": true
+    },
+    {
+        "id": "2",
+        "name": "Weekly Cleanup",
+        "schedule": "0 0 * * 0",
+        "command": "cleanup.sh",
+        "enabled": false
+    }
+]

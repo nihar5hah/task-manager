@@ -73,6 +73,48 @@ app.post('/api/tasks', (req, res) => {
     }
 });
 
+// Bulk operations (MUST be before /:id routes to avoid matching "bulk-update" as an ID)
+app.post('/api/tasks/bulk-update', (req, res) => {
+    try {
+        const { ids, updates } = req.body;
+        const tasks = readTasks();
+        
+        tasks.forEach(task => {
+            if (ids.includes(task.id)) {
+                Object.assign(task, updates, {
+                    updatedAt: new Date().toISOString()
+                });
+            }
+        });
+        
+        if (writeTasks(tasks)) {
+            res.json({ message: 'Tasks updated', count: ids.length });
+        } else {
+            res.status(500).json({ error: 'Failed to update tasks' });
+        }
+    } catch (error) {
+        console.error('Error bulk updating tasks:', error);
+        res.status(500).json({ error: 'Failed to bulk update tasks' });
+    }
+});
+
+app.delete('/api/tasks/bulk-delete', (req, res) => {
+    try {
+        const { ids } = req.body;
+        const tasks = readTasks();
+        const filteredTasks = tasks.filter(t => !ids.includes(t.id));
+        
+        if (writeTasks(filteredTasks)) {
+            res.json({ message: 'Tasks deleted', count: ids.length });
+        } else {
+            res.status(500).json({ error: 'Failed to delete tasks' });
+        }
+    } catch (error) {
+        console.error('Error bulk deleting tasks:', error);
+        res.status(500).json({ error: 'Failed to bulk delete tasks' });
+    }
+});
+
 // Update task
 app.put('/api/tasks/:id', (req, res) => {
     try {
@@ -130,48 +172,6 @@ app.post('/api/sync', (req, res) => {
     } catch (error) {
         console.error('Error syncing:', error);
         res.status(500).json({ error: 'Failed to sync' });
-    }
-});
-
-// Bulk operations
-app.post('/api/tasks/bulk-update', (req, res) => {
-    try {
-        const { ids, updates } = req.body;
-        const tasks = readTasks();
-        
-        tasks.forEach(task => {
-            if (ids.includes(task.id)) {
-                Object.assign(task, updates, {
-                    updatedAt: new Date().toISOString()
-                });
-            }
-        });
-        
-        if (writeTasks(tasks)) {
-            res.json({ message: 'Tasks updated', count: ids.length });
-        } else {
-            res.status(500).json({ error: 'Failed to update tasks' });
-        }
-    } catch (error) {
-        console.error('Error bulk updating tasks:', error);
-        res.status(500).json({ error: 'Failed to bulk update tasks' });
-    }
-});
-
-app.delete('/api/tasks/bulk-delete', (req, res) => {
-    try {
-        const { ids } = req.body;
-        const tasks = readTasks();
-        const filteredTasks = tasks.filter(t => !ids.includes(t.id));
-        
-        if (writeTasks(filteredTasks)) {
-            res.json({ message: 'Tasks deleted', count: ids.length });
-        } else {
-            res.status(500).json({ error: 'Failed to delete tasks' });
-        }
-    } catch (error) {
-        console.error('Error bulk deleting tasks:', error);
-        res.status(500).json({ error: 'Failed to bulk delete tasks' });
     }
 });
 

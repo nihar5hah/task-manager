@@ -83,6 +83,8 @@ class TaskManager {
                 e.preventDefault();
                 const view = e.currentTarget.dataset.view;
                 this.switchView(view);
+                // Close sidebar on mobile after selection
+                this.closeSidebar();
             });
         });
 
@@ -92,6 +94,8 @@ class TaskManager {
                 const category = e.currentTarget.dataset.category;
                 this.filters.category = category;
                 this.render();
+                // Close sidebar on mobile after selection
+                this.closeSidebar();
             });
         });
 
@@ -103,6 +107,16 @@ class TaskManager {
         // Theme Toggle
         document.getElementById('themeToggle').addEventListener('click', () => {
             this.toggleTheme();
+        });
+
+        // Sidebar Toggle (Mobile)
+        document.getElementById('sidebarToggle').addEventListener('click', () => {
+            this.toggleSidebar();
+        });
+
+        // Sidebar Overlay Click
+        document.getElementById('sidebarOverlay').addEventListener('click', () => {
+            this.closeSidebar();
         });
 
         // Calendar Navigation
@@ -124,11 +138,15 @@ class TaskManager {
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // ESC to close modal
+            // ESC to close modal or sidebar
             if (e.key === 'Escape') {
                 const modal = document.getElementById('taskModal');
+                const sidebar = document.getElementById('sidebar');
+
                 if (modal.classList.contains('active')) {
                     this.closeTaskModal();
+                } else if (sidebar.classList.contains('open')) {
+                    this.closeSidebar();
                 }
             }
 
@@ -290,6 +308,28 @@ class TaskManager {
 
     toggleTheme() {
         document.documentElement.classList.toggle('dark');
+    }
+
+    toggleSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        const isOpen = sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+
+        // Prevent body scroll on mobile when sidebar is open
+        if (window.innerWidth <= 768) {
+            document.body.classList.toggle('sidebar-open', isOpen);
+        }
+    }
+
+    closeSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebarOverlay');
+        sidebar.classList.remove('open');
+        overlay.classList.remove('active');
+
+        // Re-enable body scroll
+        document.body.classList.remove('sidebar-open');
     }
 
     toggleBulkSelectMode() {

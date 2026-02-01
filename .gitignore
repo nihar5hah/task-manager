@@ -1,1 +1,6 @@
-.vercel
+node_modules/
+tasks.json
+*.log
+.DS_Store
+.env
+test-bulk.sh

@@ -1,194 +1,143 @@
-// Task Manager App
+// Task Manager Application
 class TaskManager {
     constructor() {
         this.tasks = [];
-        this.filteredTasks = [];
+        this.filters = {
+            status: '',
+            priority: '',
+            category: '',
+            search: ''
+        };
         this.currentView = 'board';
-        this.currentFilter = { status: '', priority: '', category: '', search: '' };
-        this.ws = null;
-        this.draggedTask = null;
-        
+        this.bulkSelectMode = false;
+        this.selectedTasks = new Set();
         this.init();
     }
 
     async init() {
-        this.setupWebSocket();
+        console.log('Initializing Task Manager...');
+        await this.loadTasks();
         this.setupEventListeners();
         this.setupKeyboardShortcuts();
-        await this.loadTasks();
         this.render();
     }
 
-    // WebSocket Connection
-    setupWebSocket() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        const wsUrl = `${protocol}//${window.location.host}`;
-        
-        this.ws = new WebSocket(wsUrl);
-        
-        this.ws.onopen = () => {
-            console.log('[WebSocket] Connected');
-            this.updateConnectionStatus(true);
-        };
-        
-        this.ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            console.log('[WebSocket] Message:', message);
-            
-            if (message.type === 'tasks_updated') {
-                this.tasks = message.tasks;
-                this.applyFilters();
-                this.render();
-            }
-        };
-        
-        this.ws.onerror = (error) => {
-            console.error('[WebSocket] Error:', error);
-            this.updateConnectionStatus(false);
-        };
-        
-        this.ws.onclose = () => {
-            console.log('[WebSocket] Disconnected');
-            this.updateConnectionStatus(false);
-            // Reconnect after 3 seconds
-            setTimeout(() => this.setupWebSocket(), 3000);
-        };
-    }
-
-    updateConnectionStatus(connected) {
-        const statusDot = document.querySelector('.status-dot');
-        if (statusDot) {
-            statusDot.classList.toggle('connected', connected);
-        }
-    }
-
-    // Event Listeners
     setupEventListeners() {
-        // View switching
-        document.querySelectorAll('.nav-item').forEach(item => {
-            item.addEventListener('click', (e) => {
-                e.preventDefault();
-                const view = item.dataset.view;
-                this.switchView(view);
-            });
-        });
-
-        // Category filter
-        document.querySelectorAll('.category-item').forEach(item => {
-            item.addEventListener('click', () => {
-                const category = item.dataset.category;
-                this.currentFilter.category = category;
-                this.applyFilters();
-                this.render();
-            });
-        });
-
-        // Status filter
-        document.querySelectorAll('.filter-chip[data-filter="status"]').forEach(chip => {
-            chip.addEventListener('click', () => {
-                document.querySelectorAll('.filter-chip[data-filter="status"]').forEach(c => c.classList.remove('active'));
-                chip.classList.add('active');
-                this.currentFilter.status = chip.dataset.value;
-                this.applyFilters();
-                this.render();
-            });
-        });
-
-        // Priority filter
-        document.querySelectorAll('.filter-chip[data-filter="priority"]').forEach(chip => {
-            chip.addEventListener('click', () => {
-                chip.classList.toggle('active');
-                this.currentFilter.priority = chip.classList.contains('active') ? chip.dataset.value : '';
-                this.applyFilters();
-                this.render();
-            });
-        });
-
-        // Search
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => {
-            this.currentFilter.search = e.target.value.toLowerCase();
-            this.applyFilters();
-            this.render();
-        });
-
-        // Add task button
+        // Add Task Button
         document.getElementById('addTaskBtn').addEventListener('click', () => {
             this.openTaskModal();
         });
 
-        // Sync button
-        document.getElementById('syncBtn').addEventListener('click', () => {
-            this.syncTasks();
-        });
-
-        // Theme toggle
-        document.getElementById('themeToggle').addEventListener('click', () => {
-            document.documentElement.classList.toggle('light');
-        });
-
-        // Modal events
+        // Close Modal
         document.getElementById('closeModal').addEventListener('click', () => {
             this.closeTaskModal();
         });
 
+        // Cancel Button
         document.getElementById('cancelBtn').addEventListener('click', () => {
             this.closeTaskModal();
         });
 
+        // Form Submit
         document.getElementById('taskForm').addEventListener('submit', (e) => {
             e.preventDefault();
             this.saveTask();
         });
 
+        // Delete Task
         document.getElementById('deleteTaskBtn').addEventListener('click', () => {
             this.deleteTask();
+        });
+
+        // Search Input
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            this.filters.search = e.target.value;
+            this.render();
+        });
+
+        // Filter Chips
+        document.querySelectorAll('.filter-chip').forEach(chip => {
+            chip.addEventListener('click', (e) => {
+                const filter = e.target.dataset.filter;
+                const value = e.target.dataset.value;
+                
+                // Remove active from siblings
+                e.target.parentElement.querySelectorAll('.filter-chip').forEach(c => {
+                    c.classList.remove('active');
+                });
+                
+                // Add active to clicked
+                e.target.classList.add('active');
+                
+                this.filters[filter] = value;
+                this.render();
+            });
+        });
+
+        // View Navigation
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                e.preventDefault();
+                const view = e.currentTarget.dataset.view;
+                this.switchView(view);
+            });
+        });
+
+        // Category Filters
+        document.querySelectorAll('.category-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const category = e.currentTarget.dataset.category;
+                this.filters.category = category;
+                this.render();
+            });
+        });
+
+        // Sync Button
+        document.getElementById('syncBtn').addEventListener('click', () => {
+            this.syncTasks();
+        });
+
+        // Theme Toggle
+        document.getElementById('themeToggle').addEventListener('click', () => {
+            this.toggleTheme();
         });
 
         // Modal backdrop click
         document.querySelector('#taskModal .modal-backdrop').addEventListener('click', () => {
             this.closeTaskModal();
         });
-
-        document.querySelector('#commandPalette .modal-backdrop').addEventListener('click', () => {
-            this.closeCommandPalette();
-        });
     }
 
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Cmd/Ctrl + K for command palette
-            if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
-                e.preventDefault();
-                this.openCommandPalette();
+            // ESC to close modal
+            if (e.key === 'Escape') {
+                const modal = document.getElementById('taskModal');
+                if (modal.classList.contains('active')) {
+                    this.closeTaskModal();
+                }
             }
 
-            // N for new task
-            if (e.key === 'n' && !e.target.matches('input, textarea')) {
+            // Cmd/Ctrl + K for search
+            if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+                e.preventDefault();
+                document.getElementById('searchInput').focus();
+            }
+
+            // Cmd/Ctrl + N for new task
+            if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
                 e.preventDefault();
                 this.openTaskModal();
-            }
-
-            // ESC to close modals
-            if (e.key === 'Escape') {
-                this.closeTaskModal();
-                this.closeCommandPalette();
-            }
-
-            // Cmd/Ctrl + S to sync
-            if ((e.metaKey || e.ctrlKey) && e.key === 's') {
-                e.preventDefault();
-                this.syncTasks();
             }
         });
     }
 
-    // API Methods
     async loadTasks() {
         try {
             const response = await fetch('/api/tasks');
+            if (!response.ok) throw new Error('Failed to load tasks');
             this.tasks = await response.json();
-            this.applyFilters();
+            console.log('Loaded tasks:', this.tasks.length);
         } catch (error) {
             console.error('Error loading tasks:', error);
             this.showToast('Failed to load tasks', 'error');
@@ -197,32 +146,40 @@ class TaskManager {
 
     async saveTask() {
         const id = document.getElementById('taskId').value;
-        const taskData = {
+        const task = {
             title: document.getElementById('taskTitle').value,
             description: document.getElementById('taskDescription').value,
             status: document.getElementById('taskStatus').value,
             priority: document.getElementById('taskPriority').value,
             category: document.getElementById('taskCategory').value,
-            dueDate: document.getElementById('taskDueDate').value || null,
+            dueDate: document.getElementById('taskDueDate').value,
             tags: document.getElementById('taskTags').value.split(',').map(t => t.trim()).filter(t => t)
         };
 
         try {
-            const url = id ? `/api/tasks/${id}` : '/api/tasks';
-            const method = id ? 'PUT' : 'POST';
-            
-            const response = await fetch(url, {
-                method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(taskData)
-            });
-
-            if (response.ok) {
-                this.showToast(id ? 'Task updated' : 'Task created', 'success');
-                this.closeTaskModal();
-                await this.loadTasks();
-                this.render();
+            let response;
+            if (id) {
+                // Update existing task
+                response = await fetch(`/api/tasks/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(task)
+                });
+            } else {
+                // Create new task
+                response = await fetch('/api/tasks', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(task)
+                });
             }
+
+            if (!response.ok) throw new Error('Failed to save task');
+
+            await this.loadTasks();
+            this.render();
+            this.closeTaskModal();
+            this.showToast(id ? 'Task updated' : 'Task created', 'success');
         } catch (error) {
             console.error('Error saving task:', error);
             this.showToast('Failed to save task', 'error');
@@ -236,13 +193,16 @@ class TaskManager {
         if (!confirm('Are you sure you want to delete this task?')) return;
 
         try {
-            const response = await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
-            if (response.ok) {
-                this.showToast('Task deleted', 'success');
-                this.closeTaskModal();
-                await this.loadTasks();
-                this.render();
-            }
+            const response = await fetch(`/api/tasks/${id}`, {
+                method: 'DELETE'
+            });
+
+            if (!response.ok) throw new Error('Failed to delete task');
+
+            await this.loadTasks();
+            this.render();
+            this.closeTaskModal();
+            this.showToast('Task deleted', 'success');
         } catch (error) {
             console.error('Error deleting task:', error);
             this.showToast('Failed to delete task', 'error');
@@ -250,29 +210,57 @@ class TaskManager {
     }
 
     async syncTasks() {
-        const syncBtn = document.getElementById('syncBtn');
-        syncBtn.classList.add('syncing');
-        
         try {
-            const response = await fetch('/api/sync', { method: 'POST' });
-            const result = await response.json();
-            
-            this.showToast(`Synced ${result.synced} tasks`, 'success');
+            const response = await fetch('/api/sync', {
+                method: 'POST'
+            });
+
+            if (!response.ok) throw new Error('Failed to sync tasks');
+
             await this.loadTasks();
             this.render();
+            this.showToast('Tasks synced', 'success');
         } catch (error) {
             console.error('Error syncing tasks:', error);
-            this.showToast('Sync failed', 'error');
-        } finally {
-            syncBtn.classList.remove('syncing');
+            this.showToast('Failed to sync tasks', 'error');
         }
     }
 
-    // UI Methods
+    openTaskModal(task = null) {
+        const modal = document.getElementById('taskModal');
+        const form = document.getElementById('taskForm');
+        const deleteBtn = document.getElementById('deleteTaskBtn');
+
+        if (task) {
+            document.getElementById('modalTitle').textContent = 'Edit Task';
+            document.getElementById('taskId').value = task.id;
+            document.getElementById('taskTitle').value = task.title;
+            document.getElementById('taskDescription').value = task.description || '';
+            document.getElementById('taskStatus').value = task.status;
+            document.getElementById('taskPriority').value = task.priority;
+            document.getElementById('taskCategory').value = task.category;
+            document.getElementById('taskDueDate').value = task.dueDate || '';
+            document.getElementById('taskTags').value = task.tags ? task.tags.join(', ') : '';
+            deleteBtn.style.display = 'block';
+        } else {
+            document.getElementById('modalTitle').textContent = 'New Task';
+            form.reset();
+            document.getElementById('taskId').value = '';
+            deleteBtn.style.display = 'none';
+        }
+
+        modal.classList.add('active');
+        setTimeout(() => document.getElementById('taskTitle').focus(), 100);
+    }
+
+    closeTaskModal() {
+        document.getElementById('taskModal').classList.remove('active');
+    }
+
     switchView(view) {
         this.currentView = view;
         
-        // Update nav
+        // Update nav items
         document.querySelectorAll('.nav-item').forEach(item => {
             item.classList.toggle('active', item.dataset.view === view);
         });
@@ -285,21 +273,221 @@ class TaskManager {
         this.render();
     }
 
-    applyFilters() {
-        this.filteredTasks = this.tasks.filter(task => {
-            if (this.currentFilter.status && task.status !== this.currentFilter.status) return false;
-            if (this.currentFilter.priority && task.priority !== this.currentFilter.priority) return false;
-            if (this.currentFilter.category && task.category !== this.currentFilter.category) return false;
-            if (this.currentFilter.search) {
-                const search = this.currentFilter.search;
+    toggleTheme() {
+        document.documentElement.classList.toggle('dark');
+    }
+
+    toggleBulkSelectMode() {
+        this.bulkSelectMode = !this.bulkSelectMode;
+        this.selectedTasks.clear();
+        document.getElementById('bulkToolbar').style.display = this.bulkSelectMode ? 'flex' : 'none';
+        this.render();
+    }
+
+    selectAllTasks() {
+        this.getFilteredTasks().forEach(task => this.selectedTasks.add(task.id));
+        this.updateBulkUI();
+        this.render();
+    }
+
+    deselectAllTasks() {
+        this.selectedTasks.clear();
+        this.updateBulkUI();
+        this.render();
+    }
+
+    async bulkUpdateStatus(status) {
+        const taskIds = Array.from(this.selectedTasks);
+        if (taskIds.length === 0) return;
+
+        try {
+            const response = await fetch('/api/tasks/bulk-update', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ taskIds, updates: { status } })
+            });
+
+            if (!response.ok) throw new Error('Failed to bulk update');
+
+            await this.loadTasks();
+            this.selectedTasks.clear();
+            this.updateBulkUI();
+            this.render();
+            this.showToast(`Updated ${taskIds.length} tasks`, 'success');
+        } catch (error) {
+            console.error('Error bulk updating:', error);
+            this.showToast('Failed to update tasks', 'error');
+        }
+    }
+
+    async bulkDelete() {
+        const taskIds = Array.from(this.selectedTasks);
+        if (taskIds.length === 0) return;
+
+        if (!confirm(`Delete ${taskIds.length} tasks?`)) return;
+
+        try {
+            await Promise.all(taskIds.map(id => 
+                fetch(`/api/tasks/${id}`, { method: 'DELETE' })
+            ));
+
+            await this.loadTasks();
+            this.selectedTasks.clear();
+            this.updateBulkUI();
+            this.render();
+            this.showToast(`Deleted ${taskIds.length} tasks`, 'success');
+        } catch (error) {
+            console.error('Error bulk deleting:', error);
+            this.showToast('Failed to delete tasks', 'error');
+        }
+    }
+
+    updateBulkUI() {
+        document.getElementById('selectedCount').textContent = this.selectedTasks.size;
+    }
+
+    getFilteredTasks() {
+        return this.tasks.filter(task => {
+            if (this.filters.status && task.status !== this.filters.status) return false;
+            if (this.filters.priority && task.priority !== this.filters.priority) return false;
+            if (this.filters.category && task.category !== this.filters.category) return false;
+            if (this.filters.search) {
+                const search = this.filters.search.toLowerCase();
                 return task.title.toLowerCase().includes(search) ||
-                       (task.description && task.description.toLowerCase().includes(search)) ||
-                       (task.tags && task.tags.some(t => t.toLowerCase().includes(search)));
+                       (task.description && task.description.toLowerCase().includes(search));
             }
             return true;
         });
+    }
+
+    render() {
+        if (this.currentView === 'board') {
+            this.renderBoardView();
+        } else if (this.currentView === 'list') {
+            this.renderListView();
+        }
 
         this.updateCategoryCounts();
+    }
+
+    renderBoardView() {
+        const statuses = ['backlog', 'todo', 'in-progress', 'done'];
+        const tasks = this.getFilteredTasks();
+
+        statuses.forEach(status => {
+            const container = document.getElementById(`${status}-tasks`);
+            const statusTasks = tasks.filter(t => t.status === status);
+            
+            container.innerHTML = statusTasks.map(task => this.renderTaskCard(task)).join('');
+            
+            // Update column count
+            const column = container.closest('.kanban-column');
+            column.querySelector('.column-count').textContent = statusTasks.length;
+        });
+
+        // Setup drag and drop
+        this.setupDragAndDrop();
+    }
+
+    renderTaskCard(task) {
+        const priorityEmojis = {
+            urgent: '🔴',
+            high: '🟠',
+            medium: '🟡',
+            low: '🟢'
+        };
+
+        const checkbox = this.bulkSelectMode ? 
+            `<input type="checkbox" ${this.selectedTasks.has(task.id) ? 'checked' : ''} 
+                    onchange="app.toggleTaskSelection('${task.id}')" 
+                    onclick="event.stopPropagation()">` : '';
+
+        return `
+            <div class="task-card" data-task-id="${task.id}" draggable="true" 
+                 ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)"
+                 onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
+                ${checkbox}
+                <div class="task-priority">${priorityEmojis[task.priority]}</div>
+                <h4>${task.title}</h4>
+                ${task.description ? `<p>${task.description.substring(0, 100)}...</p>` : ''}
+                ${task.tags && task.tags.length ? `
+                    <div class="task-tags">
+                        ${task.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
+                    </div>
+                ` : ''}
+            </div>
+        `;
+    }
+
+    renderListView() {
+        const tasks = this.getFilteredTasks();
+        const tbody = document.getElementById('listViewBody');
+        
+        tbody.innerHTML = tasks.map(task => `
+            <tr onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
+                <td>
+                    ${this.bulkSelectMode ? 
+                        `<input type="checkbox" ${this.selectedTasks.has(task.id) ? 'checked' : ''} 
+                                onchange="app.toggleTaskSelection('${task.id}')" 
+                                onclick="event.stopPropagation()">` : ''}
+                </td>
+                <td>${task.title}</td>
+                <td><span class="badge badge-${task.status}">${task.status}</span></td>
+                <td><span class="badge badge-${task.priority}">${task.priority}</span></td>
+                <td>${task.category}</td>
+                <td>${task.dueDate || '-'}</td>
+            </tr>
+        `).join('');
+    }
+
+    setupDragAndDrop() {
+        document.querySelectorAll('.task-list').forEach(list => {
+            list.ondragover = (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.add('drag-over');
+            };
+            
+            list.ondragleave = (e) => {
+                e.currentTarget.classList.remove('drag-over');
+            };
+            
+            list.ondrop = async (e) => {
+                e.preventDefault();
+                e.currentTarget.classList.remove('drag-over');
+                
+                const taskId = e.dataTransfer.getData('text/plain');
+                const newStatus = e.currentTarget.id.replace('-tasks', '');
+                const task = this.tasks.find(t => t.id === taskId);
+                
+                if (task && task.status !== newStatus) {
+                    try {
+                        const response = await fetch(`/api/tasks/${taskId}`, {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ ...task, status: newStatus })
+                        });
+                        
+                        if (!response.ok) throw new Error('Failed to update');
+                        
+                        await this.loadTasks();
+                        this.render();
+                        this.showToast('Task moved', 'success');
+                    } catch (error) {
+                        console.error('Error moving task:', error);
+                        this.showToast('Failed to move task', 'error');
+                    }
+                }
+            };
+        });
+    }
+
+    toggleTaskSelection(taskId) {
+        if (this.selectedTasks.has(taskId)) {
+            this.selectedTasks.delete(taskId);
+        } else {
+            this.selectedTasks.add(taskId);
+        }
+        this.updateBulkUI();
     }
 
     updateCategoryCounts() {
@@ -317,313 +505,50 @@ class TaskManager {
         });
     }
 
-    render() {
-        if (this.currentView === 'board') {
-            this.renderBoard();
-        } else if (this.currentView === 'list') {
-            this.renderList();
-        } else if (this.currentView === 'calendar') {
-            this.renderCalendar();
-        } else if (this.currentView === 'graph') {
-            this.renderGraph();
-        }
-    }
-
-    renderBoard() {
-        const statuses = ['backlog', 'todo', 'in-progress', 'done'];
-        
-        statuses.forEach(status => {
-            const container = document.getElementById(`${status}-tasks`);
-            const tasks = this.filteredTasks.filter(t => t.status === status);
-            
-            // Update count
-            const column = container.closest('.kanban-column');
-            const countEl = column.querySelector('.column-count');
-            if (countEl) countEl.textContent = tasks.length;
-            
-            container.innerHTML = tasks.map(task => this.createTaskCard(task)).join('');
-            
-            // Setup drag and drop
-            container.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                container.classList.add('drag-over');
-            });
-
-            container.addEventListener('dragleave', () => {
-                container.classList.remove('drag-over');
-            });
-
-            container.addEventListener('drop', (e) => {
-                e.preventDefault();
-                container.classList.remove('drag-over');
-                if (this.draggedTask) {
-                    this.updateTaskStatus(this.draggedTask, status);
-                }
-            });
-        });
-
-        // Setup task card events
-        document.querySelectorAll('.task-card').forEach(card => {
-            card.draggable = true;
-            
-            card.addEventListener('dragstart', (e) => {
-                this.draggedTask = card.dataset.id;
-                card.classList.add('dragging');
-            });
-
-            card.addEventListener('dragend', () => {
-                card.classList.remove('dragging');
-                this.draggedTask = null;
-            });
-
-            card.addEventListener('click', () => {
-                const task = this.tasks.find(t => t.id === card.dataset.id);
-                if (task) this.openTaskModal(task);
-            });
-        });
-    }
-
-    createTaskCard(task) {
-        const tags = task.tags || [];
-        const tagsHtml = tags.slice(0, 3).map(tag => 
-            `<span class="task-tag">${tag}</span>`
-        ).join('');
-
-        const dueDate = task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '';
-        
-        return `
-            <div class="task-card" data-id="${task.id}">
-                <div class="task-priority ${task.priority}"></div>
-                <div class="task-title">${this.escapeHtml(task.title)}</div>
-                ${task.description ? `<div class="task-description">${this.escapeHtml(task.description)}</div>` : ''}
-                <div class="task-meta">
-                    ${task.source ? `<span class="task-source">${task.source}</span>` : ''}
-                    ${tagsHtml}
-                    ${dueDate ? `<span class="task-date">${dueDate}</span>` : ''}
-                </div>
-            </div>
-        `;
-    }
-
-    renderList() {
-        const tbody = document.getElementById('listViewBody');
-        tbody.innerHTML = this.filteredTasks.map(task => `
-            <tr data-id="${task.id}" onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
-                <td>
-                    <div class="task-priority ${task.priority}"></div>
-                </td>
-                <td>
-                    <strong>${this.escapeHtml(task.title)}</strong>
-                    ${task.description ? `<br><small style="color: var(--text-tertiary)">${this.escapeHtml(task.description.substring(0, 60))}...</small>` : ''}
-                </td>
-                <td><span class="status-badge ${task.status}">${task.status.replace('-', ' ')}</span></td>
-                <td><span class="priority-badge ${task.priority}">${task.priority}</span></td>
-                <td><span class="category-badge">${task.category}</span></td>
-                <td>${task.dueDate ? new Date(task.dueDate).toLocaleDateString() : '-'}</td>
-            </tr>
-        `).join('');
-    }
-
-    renderCalendar() {
-        const now = new Date();
-        const year = now.getFullYear();
-        const month = now.getMonth();
-        
-        document.getElementById('calendarMonth').textContent = 
-            new Date(year, month).toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-        
-        const firstDay = new Date(year, month, 1).getDay();
-        const daysInMonth = new Date(year, month + 1, 0).getDate();
-        
-        const grid = document.getElementById('calendarGrid');
-        grid.innerHTML = '';
-        
-        // Add day headers
-        ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].forEach(day => {
-            const header = document.createElement('div');
-            header.className = 'calendar-day-header';
-            header.textContent = day;
-            header.style.cssText = 'padding: 8px; text-align: center; font-weight: 600; background: var(--bg-tertiary);';
-            grid.appendChild(header);
-        });
-        
-        // Add empty cells for days before month starts
-        for (let i = 0; i < firstDay; i++) {
-            const empty = document.createElement('div');
-            empty.className = 'calendar-day empty';
-            grid.appendChild(empty);
-        }
-        
-        // Add days
-        for (let day = 1; day <= daysInMonth; day++) {
-            const date = new Date(year, month, day);
-            const dateStr = date.toISOString().split('T')[0];
-            const tasksForDay = this.filteredTasks.filter(t => 
-                t.dueDate && t.dueDate.startsWith(dateStr)
-            );
-            
-            const dayEl = document.createElement('div');
-            dayEl.className = 'calendar-day';
-            if (day === now.getDate() && month === now.getMonth()) {
-                dayEl.classList.add('today');
-            }
-            
-            dayEl.innerHTML = `
-                <div class="calendar-day-number">${day}</div>
-                ${tasksForDay.slice(0, 3).map(t => 
-                    `<div class="calendar-task" style="font-size: 10px; padding: 2px 4px; background: var(--bg-tertiary); margin: 2px 0; border-radius: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">${this.escapeHtml(t.title)}</div>`
-                ).join('')}
-            `;
-            
-            grid.appendChild(dayEl);
-        }
-    }
-
-    async renderGraph() {
-        const canvas = document.getElementById('graphCanvas');
-        const ctx = canvas.getContext('2d');
-        
-        // Set canvas size
-        canvas.width = canvas.offsetWidth;
-        canvas.height = canvas.offsetHeight;
-        
-        // Simple force-directed graph
-        const nodes = this.filteredTasks.map((task, i) => ({
-            id: task.id,
-            x: Math.random() * canvas.width,
-            y: Math.random() * canvas.height,
-            vx: 0,
-            vy: 0,
-            task: task
-        }));
-        
-        // Clear canvas
-        ctx.fillStyle = getComputedStyle(document.documentElement).getPropertyValue('--bg-secondary');
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        
-        // Draw nodes
-        nodes.forEach(node => {
-            ctx.beginPath();
-            ctx.arc(node.x, node.y, 8, 0, Math.PI * 2);
-            
-            // Color by priority
-            const colors = {
-                urgent: '#ef4444',
-                high: '#f97316',
-                medium: '#eab308',
-                low: '#22c55e'
-            };
-            ctx.fillStyle = colors[node.task.priority] || '#6366f1';
-            ctx.fill();
-            
-            // Draw label
-            ctx.fillStyle = '#e4e4e7';
-            ctx.font = '10px Inter';
-            ctx.fillText(node.task.title.substring(0, 20), node.x + 12, node.y + 4);
-        });
-    }
-
-    async updateTaskStatus(taskId, newStatus) {
-        try {
-            await fetch(`/api/tasks/${taskId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: newStatus })
-            });
-            
-            await this.loadTasks();
-            this.render();
-        } catch (error) {
-            console.error('Error updating task:', error);
-            this.showToast('Failed to update task', 'error');
-        }
-    }
-
-    openTaskModal(task = null) {
-        const modal = document.getElementById('taskModal');
-        const form = document.getElementById('taskForm');
-        const deleteBtn = document.getElementById('deleteTaskBtn');
-        
-        if (task) {
-            document.getElementById('modalTitle').textContent = 'Edit Task';
-            document.getElementById('taskId').value = task.id;
-            document.getElementById('taskTitle').value = task.title;
-            document.getElementById('taskDescription').value = task.description || '';
-            document.getElementById('taskStatus').value = task.status;
-            document.getElementById('taskPriority').value = task.priority;
-            document.getElementById('taskCategory').value = task.category;
-            document.getElementById('taskDueDate').value = task.dueDate || '';
-            document.getElementById('taskTags').value = (task.tags || []).join(', ');
-            deleteBtn.style.display = 'block';
-        } else {
-            document.getElementById('modalTitle').textContent = 'New Task';
-            form.reset();
-            document.getElementById('taskId').value = '';
-            deleteBtn.style.display = 'none';
-        }
-        
-        modal.classList.add('active');
-        setTimeout(() => document.getElementById('taskTitle').focus(), 100);
-    }
-
-    closeTaskModal() {
-        document.getElementById('taskModal').classList.remove('active');
-    }
-
-    openCommandPalette() {
-        const modal = document.getElementById('commandPalette');
-        modal.classList.add('active');
-        
-        const input = document.getElementById('commandInput');
-        input.value = '';
-        input.focus();
-        
-        this.updateCommandResults('');
-        
-        input.oninput = (e) => this.updateCommandResults(e.target.value);
-    }
-
-    closeCommandPalette() {
-        document.getElementById('commandPalette').classList.remove('active');
-    }
-
-    updateCommandResults(query) {
-        const results = document.getElementById('commandResults');
-        const tasks = this.tasks.filter(t => 
-            t.title.toLowerCase().includes(query.toLowerCase())
-        ).slice(0, 10);
-        
-        results.innerHTML = tasks.map(task => `
-            <div class="command-item" onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
-                <strong>${this.escapeHtml(task.title)}</strong><br>
-                <small style="color: var(--text-tertiary)">${task.status} • ${task.priority}</small>
-            </div>
-        `).join('') || '<div class="command-item">No tasks found</div>';
-    }
-
     showToast(message, type = 'info') {
         const container = document.getElementById('toastContainer');
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        toast.className = `toast toast-${type}`;
         toast.textContent = message;
         
         container.appendChild(toast);
         
         setTimeout(() => {
-            toast.style.animation = 'slideOutRight 0.3s ease-out';
+            toast.classList.add('show');
+        }, 10);
+        
+        setTimeout(() => {
+            toast.classList.remove('show');
             setTimeout(() => toast.remove(), 300);
         }, 3000);
     }
 
-    escapeHtml(text) {
-        const div = document.createElement('div');
-        div.textContent = text;
-        return div.innerHTML;
+    exportTasks(format = 'json') {
+        const data = format === 'json' ? 
+            JSON.stringify(this.tasks, null, 2) :
+            this.tasks.map(t => `${t.title}\t${t.status}\t${t.priority}`).join('\n');
+        
+        const blob = new Blob([data], { type: 'text/plain' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `tasks.${format}`;
+        a.click();
+        URL.revokeObjectURL(url);
     }
 }
 
+// Drag handlers (called from inline events)
+function handleDragStart(event) {
+    const taskId = event.target.dataset.taskId;
+    event.dataTransfer.setData('text/plain', taskId);
+    event.target.classList.add('dragging');
+}
+
+function handleDragEnd(event) {
+    event.target.classList.remove('dragging');
+}
+
 // Initialize app
-let app;
-document.addEventListener('DOMContentLoaded', () => {
-    app = new TaskManager();
-});
+const app = new TaskManager();
+window.app = app;

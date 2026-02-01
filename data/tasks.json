@@ -1,144 +1,291 @@
 {
   "tasks": [
     {
-      "id": "task-1",
-      "title": "Task A",
-      "description": "Root task",
-      "status": "in-progress",
+      "id": "cron-0470b7ec-7c6c-483b-8026-b1c38c81d926",
+      "title": "Gym",
+      "description": "**Schedule:** Cron: 0 19 * * * (Asia/Kolkata)\n\n**Reminder:** ⏰ Gym (Go to gym)\n\n**Next run:** Today at 7:00 PM",
+      "status": "todo",
       "priority": "high",
-      "category": "project",
-      "createdAt": "2026-01-31T00:00:00.000Z",
-      "updatedAt": "2026-01-31T00:00:00.000Z",
+      "category": "maintenance",
+      "source": "cron",
+      "metadata": {
+        "cronId": "0470b7ec-7c6c-483b-8026-b1c38c81d926",
+        "schedule": { "kind": "cron", "expr": "0 19 * * *", "tz": "Asia/Kolkata" },
+        "enabled": true,
+        "nextRunAtMs": 1769952600000
+      },
+      "tags": ["cron", "scheduled", "active", "reminder"],
+      "createdAt": "2026-01-28T14:28:10.501Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
       "completedAt": null,
-      "tags": [
-        "graph"
-      ],
-      "dependencies": [
-        "task-2"
-      ],
-      "metadata": {}
+      "dueDate": "2026-02-01"
     },
     {
-      "id": "task-2",
-      "title": "Task B",
-      "description": "Dependent task",
+      "id": "cron-af1350c4-0588-4490-a8f5-9bfdfb456548",
+      "title": "GRE Words",
+      "description": "**Schedule:** Cron: 0 23 * * * (Asia/Kolkata)\n\n**Reminder:** ⏰ Gre words\n\n**Next run:** Today at 11:00 PM",
       "status": "todo",
       "priority": "medium",
-      "category": "project",
-      "createdAt": "2026-01-31T00:00:00.000Z",
-      "updatedAt": "2026-01-31T00:00:00.000Z",
-      "completedAt": null,
-      "tags": [
-        "graph"
-      ],
-      "dependencies": [
-        "task-3"
-      ],
-      "metadata": {}
-    },
-    {
-      "id": "task-3",
-      "title": "Task C",
-      "description": "Final dependent task",
-      "status": "backlog",
-      "priority": "low",
-      "category": "project",
-      "createdAt": "2026-01-31T00:00:00.000Z",
-      "updatedAt": "2026-01-31T00:00:00.000Z",
-      "completedAt": null,
-      "tags": [
-        "graph"
-      ],
-      "metadata": {}
-    },
-    {
-      "id": "d0c97247-b7b1-4ec0-8f99-dc619d645d65",
-      "title": "Heartbeat Check: email",
-      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
-      "status": "in-progress",
-      "priority": "low",
-      "category": "automation",
-      "source": "heartbeat",
+      "category": "maintenance",
+      "source": "cron",
       "metadata": {
-        "checkType": "email",
-        "lastRun": 1769925607
+        "cronId": "af1350c4-0588-4490-a8f5-9bfdfb456548",
+        "enabled": true,
+        "nextRunAtMs": 1769967000000
       },
-      "tags": [
-        "heartbeat",
-        "monitoring",
-        "recurring"
-      ],
-      "createdAt": "2026-02-01T09:30:05.071Z",
-      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "tags": ["cron", "scheduled", "active"],
+      "createdAt": "2026-01-28T14:28:16.586Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
       "completedAt": null,
-      "dueDate": null
+      "dueDate": "2026-02-01"
     },
     {
-      "id": "9d836ba1-010e-4cd8-ba1b-a7ec9272c2ee",
-      "title": "Heartbeat Check: calendar",
-      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
-      "status": "in-progress",
-      "priority": "low",
-      "category": "automation",
-      "source": "heartbeat",
+      "id": "cron-fe5acb91-5359-4db2-b736-505323a9fd34",
+      "title": "Abs & Brush",
+      "description": "**Schedule:** Cron: 30 23 * * * (Asia/Kolkata)\n\n**Reminder:** ⏰ Abs and brush\n\n**Next run:** Today at 11:30 PM",
+      "status": "todo",
+      "priority": "high",
+      "category": "maintenance",
+      "source": "cron",
       "metadata": {
-        "checkType": "calendar",
-        "lastRun": 1769925607
+        "cronId": "fe5acb91-5359-4db2-b736-505323a9fd34",
+        "enabled": true,
+        "nextRunAtMs": 1769968800000
       },
-      "tags": [
-        "heartbeat",
-        "monitoring",
-        "recurring"
-      ],
-      "createdAt": "2026-02-01T09:30:05.071Z",
-      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "tags": ["cron", "scheduled", "active"],
+      "createdAt": "2026-01-28T14:28:18.771Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
       "completedAt": null,
-      "dueDate": null
+      "dueDate": "2026-02-01"
     },
     {
-      "id": "e9d78543-071f-4dfe-aa52-7ce0bfa6bb54",
-      "title": "Heartbeat Check: whatsapp",
-      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
-      "status": "in-progress",
-      "priority": "low",
-      "category": "automation",
-      "source": "heartbeat",
+      "id": "cron-c5b06fe8-849c-421f-854d-1f41b2c68278",
+      "title": "Isabgul",
+      "description": "**Schedule:** Cron: 0 0 * * * (Asia/Kolkata)\n\n**Reminder:** ⏰ Take isabgul\n\n**Next run:** Tonight at midnight",
+      "status": "todo",
+      "priority": "high",
+      "category": "maintenance",
+      "source": "cron",
       "metadata": {
-        "checkType": "whatsapp",
-        "lastRun": 1769925607
+        "cronId": "c5b06fe8-849c-421f-854d-1f41b2c68278",
+        "enabled": true,
+        "nextRunAtMs": 1769970600000
       },
-      "tags": [
-        "heartbeat",
-        "monitoring",
-        "recurring"
-      ],
-      "createdAt": "2026-02-01T09:30:05.071Z",
-      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "tags": ["cron", "scheduled", "active", "medicine"],
+      "createdAt": "2026-01-28T14:28:20.754Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
       "completedAt": null,
-      "dueDate": null
+      "dueDate": "2026-02-02"
     },
     {
-      "id": "69f4cb89-c1e0-4307-bf05-95aad9357404",
-      "title": "Heartbeat Check: git",
-      "description": "Automatic periodic check\nLast run: 2026-02-01T06:00:07.000Z",
-      "status": "in-progress",
-      "priority": "low",
+      "id": "cron-50b4da87-d85c-4f4e-a49a-042e799dfc4d",
+      "title": "Overnight Work Engine",
+      "description": "**Schedule:** Cron: 0 2 * * * (Asia/Kolkata)\n\n**Task:** Build overnight projects and deliver reports\n\n**Next run:** Tomorrow at 2:00 AM",
+      "status": "todo",
+      "priority": "medium",
       "category": "automation",
-      "source": "heartbeat",
+      "source": "cron",
       "metadata": {
-        "checkType": "git",
-        "lastRun": 1769925607
+        "cronId": "50b4da87-d85c-4f4e-a49a-042e799dfc4d",
+        "enabled": true,
+        "nextRunAtMs": 1769977800000
       },
-      "tags": [
-        "heartbeat",
-        "monitoring",
-        "recurring"
-      ],
-      "createdAt": "2026-02-01T09:30:05.071Z",
-      "updatedAt": "2026-02-01T09:30:05.071Z",
+      "tags": ["cron", "scheduled", "active", "automation"],
+      "createdAt": "2026-01-31T03:10:20.811Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
       "completedAt": null,
-      "dueDate": null
+      "dueDate": "2026-02-02"
+    },
+    {
+      "id": "cron-3cf52fbd-9477-47db-9760-6363d0d0bb77",
+      "title": "Daily Auto-Update",
+      "description": "**Schedule:** Cron: 0 4 * * * (Asia/Kolkata)\n\n**Task:** Check for Clawdbot updates and update all skills\n\n**Next run:** Tomorrow at 4:00 AM",
+      "status": "todo",
+      "priority": "medium",
+      "category": "automation",
+      "source": "cron",
+      "metadata": {
+        "cronId": "3cf52fbd-9477-47db-9760-6363d0d0bb77",
+        "enabled": true,
+        "nextRunAtMs": 1769985000000
+      },
+      "tags": ["cron", "scheduled", "active", "update"],
+      "createdAt": "2026-01-28T12:29:45.980Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-02"
+    },
+    {
+      "id": "cron-eff91c67-f40a-4334-8a5b-8587ec4016b6",
+      "title": "Morning Brief",
+      "description": "**Schedule:** Cron: 0 9 * * * (Asia/Kolkata)\n\n**Task:** Generate daily morning briefing with news, calendar, trends\n\n**Next run:** Tomorrow at 9:00 AM",
+      "status": "todo",
+      "priority": "medium",
+      "category": "communication",
+      "source": "cron",
+      "metadata": {
+        "cronId": "eff91c67-f40a-4334-8a5b-8587ec4016b6",
+        "enabled": true,
+        "nextRunAtMs": 1770003000000
+      },
+      "tags": ["cron", "scheduled", "active", "daily"],
+      "createdAt": "2026-01-29T00:16:28.759Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-02"
+    },
+    {
+      "id": "cron-cbca7c1f-97fe-4b30-9170-19ef14239c58",
+      "title": "Barça Match Check",
+      "description": "**Schedule:** Cron: 0 9 * * * (Asia/Kolkata)\n\n**Task:** Check for upcoming FC Barcelona matches\n\n**Next run:** Tomorrow at 9:00 AM",
+      "status": "todo",
+      "priority": "high",
+      "category": "communication",
+      "source": "cron",
+      "metadata": {
+        "cronId": "cbca7c1f-97fe-4b30-9170-19ef14239c58",
+        "enabled": true,
+        "nextRunAtMs": 1770003000000
+      },
+      "tags": ["cron", "scheduled", "active", "sports"],
+      "createdAt": "2026-01-30T00:44:56.379Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-02"
+    },
+    {
+      "id": "cron-e438a698-0016-43a0-85b5-352ce1516130",
+      "title": "NPTEL Quiz Check",
+      "description": "**Schedule:** Cron: 0 9 * * 1 (Asia/Kolkata)\n\n**Task:** Check for new Deep Learning quiz notifications\n\n**Next run:** Monday at 9:00 AM",
+      "status": "todo",
+      "priority": "high",
+      "category": "communication",
+      "source": "cron",
+      "metadata": {
+        "cronId": "e438a698-0016-43a0-85b5-352ce1516130",
+        "enabled": true,
+        "nextRunAtMs": 1770003000000
+      },
+      "tags": ["cron", "scheduled", "active", "education"],
+      "createdAt": "2026-01-30T01:08:12.199Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-02"
+    },
+    {
+      "id": "cron-1197bbb0-f4ef-4d09-bd97-b92ef82f6490",
+      "title": "Med: Lunch",
+      "description": "**Schedule:** Cron: 30 13 * * * (Asia/Kolkata)\n\n**Reminder:** ⏰ Take medicine after lunch\n\n**Next run:** Tomorrow at 1:30 PM",
+      "status": "todo",
+      "priority": "high",
+      "category": "maintenance",
+      "source": "cron",
+      "metadata": {
+        "cronId": "1197bbb0-f4ef-4d09-bd97-b92ef82f6490",
+        "enabled": true,
+        "nextRunAtMs": 1770019200000
+      },
+      "tags": ["cron", "scheduled", "active", "medicine"],
+      "createdAt": "2026-01-28T14:28:08.471Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-02"
+    },
+    {
+      "id": "cron-1b22c7b0-b3e3-4fe7-aa19-3027cfcd9dc4",
+      "title": "Midday Check-In",
+      "description": "**Schedule:** Cron: 0 14 * * * (Asia/Kolkata)\n\n**Task:** Scan email, WhatsApp, calendar for urgent items\n\n**Next run:** Tomorrow at 2:00 PM",
+      "status": "todo",
+      "priority": "high",
+      "category": "communication",
+      "source": "cron",
+      "metadata": {
+        "cronId": "1b22c7b0-b3e3-4fe7-aa19-3027cfcd9dc4",
+        "enabled": true,
+        "nextRunAtMs": 1770021000000
+      },
+      "tags": ["cron", "scheduled", "active", "check"],
+      "createdAt": "2026-01-31T03:10:54.012Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-02"
+    },
+    {
+      "id": "cron-5ec9fb72-2dbf-41e0-80c8-4dedfbe78632",
+      "title": "Sync Call (MWF)",
+      "description": "**Schedule:** Cron: 15 19 * * 1,3,5 (Asia/Kolkata)\n\n**Reminder:** ⏰ Sync up call\n\n**Next run:** Monday at 7:15 PM",
+      "status": "todo",
+      "priority": "high",
+      "category": "communication",
+      "source": "cron",
+      "metadata": {
+        "cronId": "5ec9fb72-2dbf-41e0-80c8-4dedfbe78632",
+        "enabled": true,
+        "nextRunAtMs": 1770039900000
+      },
+      "tags": ["cron", "scheduled", "active", "meeting"],
+      "createdAt": "2026-01-28T14:30:26.515Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-03"
+    },
+    {
+      "id": "cron-722bab46-b7ad-4ce9-a655-0bc8ef527353",
+      "title": "Vitamin D3",
+      "description": "**Schedule:** Cron: 30 21 * * 1 (Asia/Kolkata)\n\n**Reminder:** ⏰ Take D3\n\n**Next run:** Monday at 9:30 PM",
+      "status": "todo",
+      "priority": "high",
+      "category": "maintenance",
+      "source": "cron",
+      "metadata": {
+        "cronId": "722bab46-b7ad-4ce9-a655-0bc8ef527353",
+        "enabled": true,
+        "nextRunAtMs": 1770048000000
+      },
+      "tags": ["cron", "scheduled", "active", "medicine"],
+      "createdAt": "2026-01-28T14:28:22.810Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-03"
+    },
+    {
+      "id": "cron-160a4d15-58a0-464c-a8b4-4c98998446fd",
+      "title": "Reminder: Collect Jetson Nano",
+      "description": "**Schedule:** One-time at 2026-02-03\n\n**Reminder:** ⏰ Collect Jetson Nano",
+      "status": "todo",
+      "priority": "urgent",
+      "category": "maintenance",
+      "source": "cron",
+      "metadata": {
+        "cronId": "160a4d15-58a0-464c-a8b4-4c98998446fd",
+        "enabled": true,
+        "nextRunAtMs": 1770096600000
+      },
+      "tags": ["cron", "scheduled", "active", "reminder"],
+      "createdAt": "2026-01-30T06:10:53.648Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-03"
+    },
+    {
+      "id": "cron-21855329-3856-4218-a631-947ac1891928",
+      "title": "Med: Dinner (Tue,Fri)",
+      "description": "**Schedule:** Cron: 30 21 * * 2,5 (Asia/Kolkata)\n\n**Reminder:** ⏰ Take medicine after dinner\n\n**Next run:** Friday at 9:30 PM",
+      "status": "todo",
+      "priority": "high",
+      "category": "maintenance",
+      "source": "cron",
+      "metadata": {
+        "cronId": "21855329-3856-4218-a631-947ac1891928",
+        "enabled": true,
+        "nextRunAtMs": 1770134400000
+      },
+      "tags": ["cron", "scheduled", "active", "medicine"],
+      "createdAt": "2026-01-28T14:31:26.721Z",
+      "updatedAt": "2026-02-01T10:40:00.000Z",
+      "completedAt": null,
+      "dueDate": "2026-02-07"
     }
   ],
-  "lastUpdated": "2026-02-01T09:36:42.781Z"
+  "lastUpdated": "2026-02-01T10:40:00.000Z"
 }

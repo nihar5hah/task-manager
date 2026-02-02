@@ -76,6 +76,7 @@ body {
 /* App Container */
 .app-container {
     display: flex;
+    flex-direction: column;
     height: 100vh;
     width: 100vw;
     overflow: hidden;
@@ -1764,9 +1765,14 @@ button,
         order: -1;
     }
 
-    /* Ensure main content takes full width on mobile */
+    /* Ensure content wrapper and main content take full width on mobile */
+    .content-wrapper {
+        flex-direction: column;
+    }
+    
     .main-content {
         width: 100%;
+        flex: 1;
     }
 
     /* Top bar mobile */

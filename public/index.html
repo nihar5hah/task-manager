@@ -14,30 +14,24 @@
 </head>
 <body>
     <div class="app-container">
-        <!-- Mobile Sidebar Overlay -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
-
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="logo">
-                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
-                    </svg>
-                    <span>Tasks</span>
-                </div>
-                <button class="icon-btn" id="sidebarToggle" title="Toggle Sidebar">
+        <!-- Top Navigation Bar -->
+        <header class="top-navigation">
+            <div class="nav-left">
+                <button class="icon-btn mobile-menu-toggle" id="mobileMenuToggle" title="Menu">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="3" y1="12" x2="21" y2="12"></line>
                         <line x1="3" y1="6" x2="21" y2="6"></line>
                         <line x1="3" y1="18" x2="21" y2="18"></line>
                     </svg>
                 </button>
-            </div>
-
-            <div class="sidebar-content">
-                <nav class="sidebar-nav">
+                <div class="logo">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+                        <polyline points="9 22 9 12 15 12 15 22"></polyline>
+                    </svg>
+                    <span>Mission Control</span>
+                </div>
+                <nav class="top-nav-items">
                     <a href="#" class="nav-item active" data-view="board">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <rect x="3" y="3" width="7" height="7"></rect>
@@ -67,21 +61,6 @@
                         </svg>
                         <span>Calendar</span>
                     </a>
-                    <a href="#" class="nav-item" data-view="graph">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <circle cx="12" cy="12" r="10"></circle>
-                            <circle cx="12" cy="12" r="3"></circle>
-                            <line x1="12" y1="2" x2="12" y2="9"></line>
-                            <line x1="12" y1="15" x2="12" y2="22"></line>
-                            <line x1="4.93" y1="4.93" x2="9.17" y2="9.17"></line>
-                            <line x1="14.83" y1="14.83" x2="19.07" y2="19.07"></line>
-                            <line x1="2" y1="12" x2="9" y2="12"></line>
-                            <line x1="15" y1="12" x2="22" y2="12"></line>
-                            <line x1="4.93" y1="19.07" x2="9.17" y2="14.83"></line>
-                            <line x1="14.83" y1="9.17" x2="19.07" y2="4.93"></line>
-                        </svg>
-                        <span>Graph</span>
-                    </a>
                     <a href="#" class="nav-item" data-view="analytics">
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                             <line x1="18" y1="20" x2="18" y2="10"></line>
@@ -90,58 +69,44 @@
                         </svg>
                         <span>Analytics</span>
                     </a>
-                </nav>
-
-                <div class="sidebar-section">
-                    <div class="section-header">
-                        <span>Categories</span>
-                    </div>
-                    <div class="category-list">
-                        <button class="category-item" data-category="">
-                            <span class="category-icon">📋</span>
-                            <span>All Tasks</span>
-                            <span class="count" id="count-all">0</span>
-                        </button>
-                        <button class="category-item" data-category="automation">
-                            <span class="category-icon">🤖</span>
-                            <span>Automation</span>
-                            <span class="count" id="count-automation">0</span>
-                        </button>
-                        <button class="category-item" data-category="project">
-                            <span class="category-icon">🚀</span>
+                    <div class="nav-dropdown">
+                        <button class="nav-item" id="projectsDropdown">
                             <span>Projects</span>
-                            <span class="count" id="count-project">0</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                                <polyline points="6 9 12 15 18 9"></polyline>
+                            </svg>
                         </button>
-                        <button class="category-item" data-category="communication">
-                            <span class="category-icon">💬</span>
-                            <span>Communication</span>
-                            <span class="count" id="count-communication">0</span>
-                        </button>
-                        <button class="category-item" data-category="maintenance">
-                            <span class="category-icon">🔧</span>
-                            <span>Maintenance</span>
-                            <span class="count" id="count-maintenance">0</span>
-                        </button>
+                        <div class="dropdown-menu" id="projectsMenu">
+                            <button class="dropdown-item" data-category="">
+                                <span class="category-icon">📋</span>
+                                <span>All Tasks</span>
+                                <span class="count" id="count-all">0</span>
+                            </button>
+                            <button class="dropdown-item" data-category="automation">
+                                <span class="category-icon">🤖</span>
+                                <span>Automation</span>
+                                <span class="count" id="count-automation">0</span>
+                            </button>
+                            <button class="dropdown-item" data-category="project">
+                                <span class="category-icon">🚀</span>
+                                <span>Projects</span>
+                                <span class="count" id="count-project">0</span>
+                            </button>
+                            <button class="dropdown-item" data-category="communication">
+                                <span class="category-icon">💬</span>
+                                <span>Communication</span>
+                                <span class="count" id="count-communication">0</span>
+                            </button>
+                            <button class="dropdown-item" data-category="maintenance">
+                                <span class="category-icon">🔧</span>
+                                <span>Maintenance</span>
+                                <span class="count" id="count-maintenance">0</span>
+                            </button>
+                        </div>
                     </div>
-                </div>
+                </nav>
             </div>
-
-            <div class="sidebar-footer">
-                <button class="sync-btn" id="syncBtn" title="Sync tasks">
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <polyline points="1 20 1 14 7 14"></polyline>
-                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                    </svg>
-                    <span>Sync</span>
-                </button>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Top Bar -->
-            <div class="top-bar">
+            <div class="nav-right">
                 <div class="search-container">
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="11" cy="11" r="8"></circle>
@@ -149,39 +114,100 @@
                     </svg>
                     <input type="text" id="searchInput" placeholder="Search tasks... (Cmd+K)" />
                 </div>
-                
-                <div class="top-bar-actions">
-                    <div class="connection-status" id="wsStatus" title="WebSocket connection">
-                        <span class="status-dot"></span>
-                    </div>
-                    <button class="icon-btn" onclick="app.toggleBulkSelectMode()" title="Bulk Select (B)">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polyline points="9 11 12 14 22 4"></polyline>
-                            <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" onclick="app.exportTasks('json')" title="Export (Cmd+E)">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
-                            <polyline points="7 10 12 15 17 10"></polyline>
-                            <line x1="12" y1="15" x2="12" y2="3"></line>
-                        </svg>
-                    </button>
-                    <button class="icon-btn" id="themeToggle" title="Toggle theme">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
-                        </svg>
-                    </button>
-                    <button class="btn-primary" id="addTaskBtn">
-                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        <span>New Task</span>
-                    </button>
+                <div class="connection-status" id="wsStatus" title="WebSocket connection">
+                    <span class="status-dot"></span>
+                </div>
+                <button class="icon-btn" onclick="app.toggleBulkSelectMode()" title="Bulk Select (B)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 11 12 14 22 4"></polyline>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </button>
+                <button class="icon-btn" onclick="app.exportTasks('json')" title="Export (Cmd+E)">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                        <polyline points="7 10 12 15 17 10"></polyline>
+                        <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="themeToggle" title="Toggle theme">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+                    </svg>
+                </button>
+                <button class="icon-btn" id="syncBtn" title="Sync tasks">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+                <button class="btn-primary" id="addTaskBtn">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="12" y1="5" x2="12" y2="19"></line>
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                    </svg>
+                    <span>New Task</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Stats Bar -->
+        <div class="stats-bar" id="statsBar">
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                        <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statCompletion">0%</div>
+                    <div class="stat-label">Completion</div>
                 </div>
             </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M9 11l3 3L22 4"></path>
+                        <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statTotal">0</div>
+                    <div class="stat-label">Total Tasks</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statInProgress">0</div>
+                    <div class="stat-label">In Progress</div>
+                </div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-icon">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                </div>
+                <div class="stat-content">
+                    <div class="stat-value" id="statOverdue">0</div>
+                    <div class="stat-label">Overdue</div>
+                </div>
+            </div>
+        </div>
 
+        <!-- Content Wrapper with Activity Feed -->
+        <div class="content-wrapper">
+            <main class="main-content">
             <!-- Active Filters Bar -->
             <div id="activeFiltersBar" style="padding: 12px 24px; border-bottom: 1px solid var(--border-primary); display: flex; flex-wrap: wrap; gap: 8px; min-height: 20px;"></div>
 
@@ -337,6 +363,37 @@
                 <div class="view" id="analyticsView" style="overflow-y: auto;"></div>
             </div>
         </main>
+
+        <!-- Activity Feed -->
+        <aside class="activity-feed" id="activityFeed">
+            <div class="activity-header">
+                <h3>Activity Feed</h3>
+                <button class="icon-btn activity-close" id="activityFeedClose" title="Close">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+            </div>
+            <div class="activity-timeline" id="activityTimeline">
+                <div class="activity-empty">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <p>No recent activity</p>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <!-- Mobile Activity Feed Toggle -->
+    <button class="activity-feed-toggle" id="activityFeedToggle" title="Activity Feed">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+        </svg>
+    </button>
     </div>
 
     <!-- Task Modal -->

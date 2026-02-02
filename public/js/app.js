@@ -14,6 +14,8 @@ class TaskManager {
         this.bulkSelectMode = false;
         this.selectedTasks = new Set();
         this.currentMonth = new Date();
+        this.activityLog = [];
+        this.maxActivityItems = 50;
         this.init();
     }
 
@@ -109,14 +111,34 @@ class TaskManager {
             this.toggleTheme();
         });
 
-        // Sidebar Toggle (Mobile)
-        document.getElementById('sidebarToggle').addEventListener('click', () => {
-            this.toggleSidebar();
+        // Mobile Menu Toggle
+        document.getElementById('mobileMenuToggle')?.addEventListener('click', () => {
+            this.toggleMobileMenu();
         });
 
-        // Sidebar Overlay Click
-        document.getElementById('sidebarOverlay').addEventListener('click', () => {
-            this.closeSidebar();
+        // Projects Dropdown
+        document.getElementById('projectsDropdown')?.addEventListener('click', () => {
+            this.toggleProjectsDropdown();
+        });
+
+        // Category Filters in Dropdown
+        document.querySelectorAll('.dropdown-item').forEach(item => {
+            item.addEventListener('click', (e) => {
+                const category = e.currentTarget.dataset.category;
+                this.filters.category = category;
+                this.render();
+                this.closeProjectsDropdown();
+            });
+        });
+
+        // Activity Feed Toggle
+        document.getElementById('activityFeedToggle')?.addEventListener('click', () => {
+            this.toggleActivityFeed();
+        });
+
+        // Activity Feed Close
+        document.getElementById('activityFeedClose')?.addEventListener('click', () => {
+            this.closeActivityFeed();
         });
 
         // Calendar Navigation
@@ -169,6 +191,18 @@ class TaskManager {
             const response = await fetch('/api/tasks');
             if (!response.ok) throw new Error('Failed to load tasks');
             this.tasks = await response.json();
+
+            // Add timestamps to tasks that don't have them (migration)
+            this.tasks = this.tasks.map(task => {
+                if (!task.createdAt) {
+                    task.createdAt = Date.now();
+                }
+                if (!task.updatedAt) {
+                    task.updatedAt = task.createdAt;
+                }
+                return task;
+            });
+
             console.log('Loaded tasks:', this.tasks.length);
         } catch (error) {
             console.error('Error loading tasks:', error);
@@ -187,6 +221,14 @@ class TaskManager {
             dueDate: document.getElementById('taskDueDate').value,
             tags: document.getElementById('taskTags').value.split(',').map(t => t.trim()).filter(t => t)
         };
+
+        // Add timestamps
+        if (!id) {
+            task.createdAt = Date.now();
+            task.updatedAt = Date.now();
+        } else {
+            task.updatedAt = Date.now();
+        }
 
         try {
             let response;
@@ -209,6 +251,14 @@ class TaskManager {
             if (!response.ok) throw new Error('Failed to save task');
 
             await this.loadTasks();
+
+            // Log activity
+            if (id) {
+                this.logActivity('updated', task.title, `Updated task details`);
+            } else {
+                this.logActivity('created', task.title, `Created new task in ${task.category}`);
+            }
+
             this.render();
             this.closeTaskModal();
             this.showToast(id ? 'Task updated' : 'Task created', 'success');
@@ -222,6 +272,9 @@ class TaskManager {
         const id = document.getElementById('taskId').value;
         if (!id) return;
 
+        const task = this.tasks.find(t => t.id === id);
+        if (!task) return;
+
         if (!confirm('Are you sure you want to delete this task?')) return;
 
         try {
@@ -230,6 +283,8 @@ class TaskManager {
             });
 
             if (!response.ok) throw new Error('Failed to delete task');
+
+            this.logActivity('deleted', task.title, `Deleted task from ${task.category}`);
 
             await this.loadTasks();
             this.render();
@@ -364,6 +419,8 @@ class TaskManager {
 
             if (!response.ok) throw new Error('Failed to bulk update');
 
+            this.logActivity('bulk-operation', `${taskIds.length} tasks`, `Updated status to ${status}`);
+
             await this.loadTasks();
             this.selectedTasks.clear();
             this.updateBulkUI();
@@ -382,9 +439,11 @@ class TaskManager {
         if (!confirm(`Delete ${taskIds.length} tasks?`)) return;
 
         try {
-            await Promise.all(taskIds.map(id => 
+            await Promise.all(taskIds.map(id =>
                 fetch(`/api/tasks/${id}`, { method: 'DELETE' })
             ));
+
+            this.logActivity('bulk-operation', `${taskIds.length} tasks`, `Deleted multiple tasks`);
 
             await this.loadTasks();
             this.selectedTasks.clear();
@@ -406,14 +465,14 @@ class TaskManager {
             if (this.filters.status && task.status !== this.filters.status) return false;
             if (this.filters.priority && task.priority !== this.filters.priority) return false;
             if (this.filters.category && task.category !== this.filters.category) return false;
-            
+
             // Recurring filter
             if (this.filters.recurring) {
                 const isDaily = task.tags && task.tags.includes('daily');
                 if (this.filters.recurring === 'daily' && !isDaily) return false;
                 if (this.filters.recurring === 'non-daily' && isDaily) return false;
             }
-            
+
             if (this.filters.search) {
                 const search = this.filters.search.toLowerCase();
                 return task.title.toLowerCase().includes(search) ||
@@ -421,6 +480,113 @@ class TaskManager {
             }
             return true;
         });
+    }
+
+    logActivity(type, taskTitle, description) {
+        const activity = {
+            type,
+            taskTitle,
+            description,
+            timestamp: Date.now()
+        };
+
+        this.activityLog.unshift(activity);
+
+        // Limit activity log size
+        if (this.activityLog.length > this.maxActivityItems) {
+            this.activityLog = this.activityLog.slice(0, this.maxActivityItems);
+        }
+
+        this.renderActivityFeed();
+    }
+
+    renderActivityFeed() {
+        const timeline = document.getElementById('activityTimeline');
+
+        if (this.activityLog.length === 0) {
+            timeline.innerHTML = `
+                <div class="activity-empty">
+                    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <line x1="12" y1="8" x2="12" y2="12"></line>
+                        <line x1="12" y1="16" x2="12.01" y2="16"></line>
+                    </svg>
+                    <p>No recent activity</p>
+                </div>
+            `;
+            return;
+        }
+
+        timeline.innerHTML = this.activityLog.map(activity => {
+            const timeAgo = this.formatTimeAgo(activity.timestamp);
+            return `
+                <div class="activity-item type-${activity.type}">
+                    <div class="activity-time">${timeAgo}</div>
+                    <div class="activity-title">${activity.taskTitle}</div>
+                    <div class="activity-description">${activity.description}</div>
+                </div>
+            `;
+        }).join('');
+    }
+
+    formatTimeAgo(timestamp) {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+
+        if (seconds < 60) return 'Just now';
+        if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+        if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+        if (seconds < 604800) return `${Math.floor(seconds / 86400)}d ago`;
+
+        return new Date(timestamp).toLocaleDateString();
+    }
+
+    calculateStats() {
+        const total = this.tasks.length;
+        const done = this.tasks.filter(t => t.status === 'done').length;
+        const inProgress = this.tasks.filter(t => t.status === 'in-progress').length;
+        const overdue = this.tasks.filter(t => {
+            return t.dueDate &&
+                   new Date(t.dueDate) < new Date() &&
+                   t.status !== 'done';
+        }).length;
+
+        const completion = total > 0 ? Math.round((done / total) * 100) : 0;
+
+        return { total, done, inProgress, overdue, completion };
+    }
+
+    renderStatsBar() {
+        const stats = this.calculateStats();
+
+        document.getElementById('statCompletion').textContent = `${stats.completion}%`;
+        document.getElementById('statTotal').textContent = stats.total;
+        document.getElementById('statInProgress').textContent = stats.inProgress;
+        document.getElementById('statOverdue').textContent = stats.overdue;
+    }
+
+    toggleMobileMenu() {
+        const menu = document.querySelector('.top-nav-items');
+        menu.classList.toggle('open');
+    }
+
+    toggleProjectsDropdown() {
+        const dropdown = document.getElementById('projectsMenu');
+        dropdown.classList.toggle('active');
+    }
+
+    closeProjectsDropdown() {
+        const dropdown = document.getElementById('projectsMenu');
+        dropdown.classList.remove('active');
+    }
+
+    toggleActivityFeed() {
+        const feed = document.getElementById('activityFeed');
+        feed.classList.toggle('open');
+    }
+
+    closeActivityFeed() {
+        const feed = document.getElementById('activityFeed');
+        feed.classList.remove('open');
     }
 
     render() {
@@ -437,6 +603,7 @@ class TaskManager {
         }
 
         this.updateCategoryCounts();
+        this.renderStatsBar();
     }
 
     renderBoardView() {
@@ -466,16 +633,26 @@ class TaskManager {
             low: '🟢'
         };
 
+        const categoryIcons = {
+            project: '🚀',
+            automation: '🤖',
+            communication: '💬',
+            maintenance: '🔧'
+        };
+
         const isDaily = task.tags && task.tags.includes('daily');
         const dailyIndicator = isDaily ? '<span class="daily-badge" title="Daily recurring task">🔄</span>' : '';
 
-        const checkbox = this.bulkSelectMode ? 
-            `<input type="checkbox" ${this.selectedTasks.has(task.id) ? 'checked' : ''} 
-                    onchange="app.toggleTaskSelection('${task.id}')" 
+        const checkbox = this.bulkSelectMode ?
+            `<input type="checkbox" ${this.selectedTasks.has(task.id) ? 'checked' : ''}
+                    onchange="app.toggleTaskSelection('${task.id}')"
                     onclick="event.stopPropagation()">` : '';
 
+        const timestamp = task.updatedAt ? `<div class="task-timestamp">${this.formatTimeAgo(task.updatedAt)}</div>` : '';
+        const categoryBadge = `<span class="task-category-badge">${categoryIcons[task.category] || '📋'} ${task.category}</span>`;
+
         return `
-            <div class="task-card ${isDaily ? 'daily-task' : ''}" data-task-id="${task.id}" draggable="true" 
+            <div class="task-card ${isDaily ? 'daily-task' : ''}" data-task-id="${task.id}" draggable="true"
                  ondragstart="handleDragStart(event)" ondragend="handleDragEnd(event)"
                  onclick="app.openTaskModal(app.tasks.find(t => t.id === '${task.id}'))">
                 ${checkbox}
@@ -485,11 +662,10 @@ class TaskManager {
                 </div>
                 <h4>${task.title}</h4>
                 ${task.description ? `<p>${task.description.substring(0, 100)}...</p>` : ''}
-                ${task.tags && task.tags.length ? `
-                    <div class="task-tags">
-                        ${task.tags.map(tag => `<span class="tag">${tag}</span>`).join('')}
-                    </div>
-                ` : ''}
+                <div class="task-meta">
+                    ${categoryBadge}
+                    ${timestamp}
+                </div>
             </div>
         `;
     }
@@ -736,21 +912,23 @@ class TaskManager {
             list.ondrop = async (e) => {
                 e.preventDefault();
                 e.currentTarget.classList.remove('drag-over');
-                
+
                 const taskId = e.dataTransfer.getData('text/plain');
                 const newStatus = e.currentTarget.id.replace('-tasks', '');
                 const task = this.tasks.find(t => t.id === taskId);
-                
+
                 if (task && task.status !== newStatus) {
                     try {
                         const response = await fetch(`/api/tasks/${taskId}`, {
                             method: 'PUT',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ ...task, status: newStatus })
+                            body: JSON.stringify({ ...task, status: newStatus, updatedAt: Date.now() })
                         });
-                        
+
                         if (!response.ok) throw new Error('Failed to update');
-                        
+
+                        this.logActivity('status-change', task.title, `Moved from ${task.status} to ${newStatus}`);
+
                         await this.loadTasks();
                         this.render();
                         this.showToast('Task moved', 'success');

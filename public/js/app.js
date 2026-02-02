@@ -22,6 +22,7 @@ class TaskManager {
     async init() {
         console.log('Initializing Task Manager...');
         await this.loadTasks();
+        await this.loadActivityLog();
         this.setupEventListeners();
         this.setupKeyboardShortcuts();
         this.render();
@@ -207,6 +208,36 @@ class TaskManager {
         } catch (error) {
             console.error('Error loading tasks:', error);
             this.showToast('Failed to load tasks', 'error');
+        }
+    }
+
+    async loadActivityLog() {
+        try {
+            const response = await fetch('/api/activity');
+            if (!response.ok) {
+                console.log('No activity log found, starting fresh');
+                return;
+            }
+            this.activityLog = await response.json();
+            console.log('Loaded activity log:', this.activityLog.length, 'items');
+            this.renderActivityFeed();
+        } catch (error) {
+            console.error('Error loading activity log:', error);
+        }
+    }
+
+    async saveActivityLog() {
+        try {
+            const response = await fetch('/api/activity', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(this.activityLog)
+            });
+            if (!response.ok) throw new Error('Failed to save activity log');
+        } catch (error) {
+            console.error('Error saving activity log:', error);
         }
     }
 
@@ -497,6 +528,7 @@ class TaskManager {
             this.activityLog = this.activityLog.slice(0, this.maxActivityItems);
         }
 
+        this.saveActivityLog();
         this.renderActivityFeed();
     }
 

@@ -1,6 +1,2 @@
-
-> task-manager@2.0.0 start
-> node server.js
-
 ✅ Task Manager running on http://localhost:3000
 📁 Tasks file: /home/hyper/clawd/tools/task-manager/tasks.json

@@ -175,6 +175,50 @@ app.post('/api/sync', (req, res) => {
     }
 });
 
+// Activity log endpoints
+const ACTIVITY_FILE = path.join(__dirname, 'activity.json');
+
+function readActivity() {
+    try {
+        if (!fs.existsSync(ACTIVITY_FILE)) {
+            return [];
+        }
+        const data = fs.readFileSync(ACTIVITY_FILE, 'utf8');
+        return JSON.parse(data);
+    } catch (error) {
+        console.error('Error reading activity:', error);
+        return [];
+    }
+}
+
+function writeActivity(activity) {
+    try {
+        fs.writeFileSync(ACTIVITY_FILE, JSON.stringify(activity, null, 2));
+        return true;
+    } catch (error) {
+        console.error('Error writing activity:', error);
+        return false;
+    }
+}
+
+app.get('/api/activity', (req, res) => {
+    const activity = readActivity();
+    res.json(activity);
+});
+
+app.post('/api/activity', (req, res) => {
+    try {
+        if (writeActivity(req.body)) {
+            res.json({ message: 'Activity log saved' });
+        } else {
+            res.status(500).json({ error: 'Failed to save activity log' });
+        }
+    } catch (error) {
+        console.error('Error saving activity:', error);
+        res.status(500).json({ error: 'Failed to save activity log' });
+    }
+});
+
 // Start server
 app.listen(port, () => {
     console.log(`✅ Task Manager running on http://localhost:${port}`);

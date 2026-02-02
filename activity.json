@@ -1,0 +1,14 @@
+[
+  {
+    "type": "status-change",
+    "taskTitle": "Test",
+    "description": "Moved from in-progress to done",
+    "timestamp": 1770016989750
+  },
+  {
+    "type": "status-change",
+    "taskTitle": "Test",
+    "description": "Moved from done to in-progress",
+    "timestamp": 1770016980215
+  }
+]
